@@ -1,0 +1,34 @@
+Frontend URL: frontend.rentmatch.au
+
+Backend URL: https://backend.rentmatch.au/
+
+
+Need below mentioned at the time of Upload process for Google Playstore and Apple App Store
+1.Privacy Policy Url
+2.Delete Account API 
+3.Delete account URL
+4.Support URL/Website URL which contains FAQ section and FAQ must contain below mentioned
+ 
+*Q: Is this an in-app purchase?**  
+**A:** No, this is a real-world purchase facilitated through Stripe. The App Store’s In-App Purchase system is **not used** because users are buying a **fractional share** in a physical dog, not digital content.
+ 
+**Q: Why is payment handled via Stripe?**  
+**A:** Stripe ensures secure processing for real-world transactions. Since this purchase involves **actual dog ownership**, it does not require Apple or Google Play's in-app payment system.
+
+*Q: Does this violate App Store/Play Store guidelines?**  
+**A:** No, because the purchase is **for a physical entity**, it complies with Apple and Google guidelines for external transactions.
+
+ITSC CAL Project:
+
+Google Map Key
+Latest Key
+AIzaSyBYyEVLoI7MeOd2EXKQhePjACpY8pe8wcc
+
+
+Previous Key
+AIzaSyCGRQavtVfIlnBuSkELe98R2MFjXQdnLRc
+
+
+New Personal Access Token: 16-Feb-2026
+Email/Username: sourish.mukherjee@shyamfuture.com
+Token: glpat-Gv6PKYO-0hYft9cHwHd9d286MQp1OmMH.01.0w1urcj2h

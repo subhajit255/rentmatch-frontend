@@ -1,0 +1,1 @@
+export type cmsType = "PRIVACY_POLICY" | "TERMS_AND_CONDITIONS"
