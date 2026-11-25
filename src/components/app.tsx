@@ -65,6 +65,7 @@ import FeedbackListAdmin from "./feedback-admin-tenent/feedbackListAdmin";
 import HowItWorks from "./ContentMangementSystem/screens/Landing/HowItWorks";
 import Advice from "./ContentMangementSystem/screens/Landing/Advice";
 const FeaturedProperty = React.lazy(() => import("./featuredProperty/featuredProperty"));
+import PropertyMatchDetails from "./Property/PropertyMatchDetails";
 
 const App: React.FC = () => {
 
@@ -104,15 +105,18 @@ const App: React.FC = () => {
             element={<EmailVerification />}
           />
           <Route path="/registration" element={<Registration />} />
-          <Route element={<PaymentLayout />}>
-            <Route
-              path="/subscriptions"
-              element={<SubscriptionListForOwners />}
-            />
-            <Route path="/checkout" element={<PaymentWrapper />} />
-            <Route path="/payment-success" element={<PaymentSuccess />} />
-          </Route>
-          {/* <Route path="*" element={<CommingSoon/>} /> */}
+        </Route>
+      </Route>
+
+      {/* Subscription & Payment Checkout Routes (accessible by logged-in and onboarding owners) */}
+      <Route element={<AuthLayout />}>
+        <Route element={<PaymentLayout />}>
+          <Route
+            path="/subscriptions"
+            element={<SubscriptionListForOwners />}
+          />
+          <Route path="/checkout" element={<PaymentWrapper />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
         </Route>
       </Route>
 
@@ -310,6 +314,7 @@ const App: React.FC = () => {
           }
         >
           <Route path="/explore-properties" element={<ExploreProperties />} />
+          <Route path="/property-match/:id" element={<PropertyMatchDetails />} />
           <Route path="/faqs" element={<Faqs />} />
           <Route path="/policy/terms-and-conditions" element={<Policy />} />
           <Route path="/policy/privacy-policy" element={<Policy />} />

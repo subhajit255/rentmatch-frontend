@@ -18,7 +18,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPropertyTypeList } from "../../../actions/propertyMaster";
 import { toast } from "../../../custom-hooks/use-toast";
 import { addMyPostApi, updateMyPostApi } from "../../../actions/myPost";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { createMyPostSchema } from "../../../schemas/tenant";
 import { FormError } from "../../errors";
 import {
@@ -299,21 +299,17 @@ const CreatePost = () => {
 
   return (
     <div className="common-container">
-      <div className="flex justify-between">
-        <div className="flex items-center justify-between mb-6 rounded-lg">
-          <h2 className="text-md font-bold text-gray-900">
-            Post {state && state._id ? "Edit" : "Add"}
-          </h2>
-        </div>
-        <div className="flex border rounded-lg py-2">
-          <a
-            href="/my-posts"
-            className="bg-primary px-6 flex items-center gap-2 rounded-3xl text-white hover:text-primary hover:bg-white border border-primary py-2"
-          >
-            <ArrowLeft />
-            Back
-          </a>
-        </div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+          Post {state && state._id ? "Edit" : "Add"}
+        </h2>
+        <Link
+          to="/my-posts"
+          className="border border-primary text-primary hover:bg-primary hover:text-white font-semibold text-xs sm:text-sm px-5 py-2 rounded-full flex items-center gap-1.5 transition-all shadow-2xs"
+        >
+          <ArrowLeft className="w-4 h-4 stroke-[2]" />
+          Back
+        </Link>
       </div>
       <div className="w-full rounded-lg px-6 py-8 flex flex-col gap-7 bg-white">
         <div>

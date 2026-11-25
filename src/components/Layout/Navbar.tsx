@@ -37,12 +37,13 @@ const Navbar = () => {
           />
         </a>
 
-        <a href="/" className="flex items-center justify-center gap-2 w-[200px] h-[54px] px-5 py-[11px] bg-background rounded-full border border-solid hover:bg-[#2a429326] h-auto">
-          <img className="w-5 h-5" alt="Icon" src={IMAGES.home} />
-          <span className="hidden lg:inline font-sans font-semibold text-primary text-base tracking-[0] leading-[normal] hover:text-primary">
-            Back To Home
-          </span>
-        </a>
+        <Link
+          to="/"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white rounded-full border border-slate-200 hover:border-primary hover:bg-blue-50/50 transition-all text-primary font-semibold text-sm shadow-2xs"
+        >
+          <img className="w-4 h-4 object-contain" alt="Home" src={IMAGES.home} />
+          <span>Back To Home</span>
+        </Link>
       </div>
     </header>
   );

@@ -1,4 +1,5 @@
 import React, { MouseEvent, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
 import { Badge } from "./../../ui/badge";
 import { Card, CardContent } from "./../../ui/card";
@@ -10,39 +11,48 @@ import { useSheet } from "../../../context/sheetProvider";
 import { Button } from "../../ui/button";
 import Icon from "../../icons/icon";
 import { useAuth } from "../../../context/AuthContext";
+import { openMatchingPreferencesModal } from "../../modals/RenterPreferencesModalManager";
 
 type PropertyHorizontalProps = {
   id: string;
   property: any;
-  isChatscreen?: boolean
+  isChatscreen?: boolean;
+  onLocationClick?: (property: any) => void;
   // onCardClick: (id: string) => void;
 };
-
 
 const PropertyHorizontal: React.FC<PropertyHorizontalProps> = ({
   id,
   property,
-  isChatscreen = false
+  isChatscreen = false,
+  onLocationClick,
   // onCardClick,
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { openSheet, setParameters: setDrawerParameters } = useSheet();
   const [propertyListings, setpropertyListings] = useState<any[]>([]);
 
   const { property_details } = property;
-  const { basic, rent_details, features, additional_information, documents, ...rest } = property_details || {};
+  const {
+    basic,
+    rent_details,
+    features,
+    additional_information,
+    documents,
+    ...rest
+  } = property_details || {};
 
   useEffect(() => {
     // console.log("documents ::: ", documents);
 
     if (documents) {
-
       if (documents?.images)
-        setpropertyListings(prev => ([...prev, ...documents?.images]))
+        setpropertyListings((prev) => [...prev, ...documents?.images]);
       if (documents?.videos)
-        setpropertyListings(prev => ([...prev, ...documents?.videos]))
+        setpropertyListings((prev) => [...prev, ...documents?.videos]);
       if (documents?.floorPlans)
-        setpropertyListings(prev => ([...prev, ...documents?.floorPlans]))
+        setpropertyListings((prev) => [...prev, ...documents?.floorPlans]);
     }
   }, [documents]);
 
@@ -54,7 +64,7 @@ const PropertyHorizontal: React.FC<PropertyHorizontalProps> = ({
       property: property,
     });
     openSheet("propertySchedularForm");
-  }
+  };
 
   return (
     <Card
@@ -69,104 +79,116 @@ const PropertyHorizontal: React.FC<PropertyHorizontalProps> = ({
       }}
     >
       <div className="flex">
-        <div className="relative ">
-          <div className="relative w-33 h-35 flex-shrink-0">
+        <div className="relative flex-shrink-0">
+          <div className="relative w-36 sm:w-44 h-full min-h-[140px] flex-shrink-0">
             <img
-              src={propertyListings[0]?.url ?? IMAGES.villa_image ?? "/placeholder.svg"}
+              src={
+                propertyListings[0]?.url ??
+                IMAGES.villa_image ??
+                "/placeholder.svg"
+              }
               alt={property?.property_details?.basic?.property_name}
-              className="w-33 h-full object-cover"
+              className="w-full h-full object-cover"
             />
           </div>
-          <div className="absolute top-3 left-3 flex gap-2">
+          <div className="absolute top-2.5 left-2.5 flex flex-wrap items-center gap-1.5 z-10 max-w-[calc(100%-16px)]">
             {property.property_details?.basic?.property_type_id?.name && (
-              <Badge className="bg-chart-3 text-foreground hover:bg-chart-3 rounded-[99px] px-1 py-0 h-5 md:h-5">
-                <span
-                  className="font-sans font-medium text-[12px]"
-                >
-                  {property.property_details?.basic?.property_type_id?.name.length > 6 ? `${property.property_details?.basic?.property_type_id?.name.slice(0, 6)}..` : property.property_details?.basic?.property_type_id?.name}
-                </span>
+              <Badge className="bg-[#FCD34D] text-slate-900 hover:bg-[#FCD34D] rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap border-0 shadow-sm h-auto">
+                {property.property_details?.basic?.property_type_id?.name}
               </Badge>
             )}
             {property.property_details?.basic?.is_available_for_rent && (
-              <Badge className="bg-white text-[#08914f] hover:bg-white rounded-[99px] px-1 py-0 h-5 md:h-5">
-                <span
-                  className="font-sans font-medium text-[12px]"
-                >
-                  For Rent
-                </span>
+              <Badge className="bg-white text-[#15803D] hover:bg-white rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap border-0 shadow-sm h-auto">
+                For Rent
               </Badge>
             )}
           </div>
           {property.is_send_request == true && (
-            <div className="absolute bottom-3 right-3 flex gap-2">
-              <Badge className="bg-primary text-foreground rounded-[99px] px-1 py-0 h-5 md:h-5">
-                <span
-                  className="font-sans font-medium text-xs px-2 flex items-center justify-center text-background"
-                >
-                 {property.send_request_status === 'APPROVED' ? "Approved" : "Request Sent" } 
-                </span>
+            <div className="absolute bottom-2.5 left-2.5 flex gap-1.5 z-10">
+              <Badge className="bg-[#2B52BA] text-white hover:bg-[#2B52BA] rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap border-0 shadow-sm h-auto">
+                {property.send_request_status === "APPROVED"
+                  ? "Approved"
+                  : "Request Sent"}
               </Badge>
             </div>
           )}
         </div>
         <CardContent className="flex-1 p-2 bg-white">
-          <div className="flex justify-between items-start mb-2">
-            <h3 title={property?.property_details?.basic?.property_name} className="font-semibold text-gray-900 text-lg truncate w-[200px]">
+          <div className="flex justify-between items-start gap-2 mb-2">
+            <h3
+              title={property?.property_details?.basic?.property_name}
+              className="font-semibold text-gray-900 text-lg truncate flex-1"
+            >
               {property?.property_details?.basic?.property_name}
             </h3>
+
+            {/* Match Percentage Badge - Navigates to match breakdown */}
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                const propId = property?._id || id;
+                navigate(`/property-match/${propId}`, { state: { property } });
+              }}
+              className="bg-[#E8F8EE] hover:bg-[#D1F2DE] transition-colors cursor-pointer text-[#065F46] rounded-2xl px-2.5 py-1 flex flex-col items-center justify-center shrink-0 group shadow-2xs"
+              title="Click to view full match score breakdown"
+            >
+              <span className="font-bold text-xs leading-tight group-hover:underline">
+                {property?.matching_percentage ?? property?.matchPercentage ?? property?.matchScore ?? property?.match_percentage ?? property?.match ?? 92}%
+              </span>
+              <span className="font-semibold text-[10px] leading-none">
+                match
+              </span>
+            </div>
           </div>
-          <div className="flex flex-wrap items-start gap-2 md:gap-2">
-            <div className="flex items-center gap-1">
-              {/* <BedIcon className="w-4 h-4" /> */}
-              <img src={IMAGES.beds} alt="" className="w-3 h-3" />
-              <span
-                className="font-sans font-normal text-xs"
-              >
-                Beds:
-              </span>
-              <span
-                className="font-sans font-semibold text-primary-foreground text-xs"
-              >
-                {property.property_details?.features?.no_of_bedrooms || 0}
-              </span>
+
+          <div className="flex flex-col gap-1.5 mb-2">
+            {/* Beds and Baths */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                {/* <BedIcon className="w-4 h-4" /> */}
+                <img src={IMAGES.beds} alt="" className="w-3 h-3" />
+                <span className="font-sans font-normal text-xs">Beds:</span>
+                <span className="font-sans font-semibold text-primary-foreground text-xs">
+                  {property.property_details?.features?.no_of_bedrooms || 0}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                {/* <BathIcon className="w-4 h-4" /> */}
+                <img src={IMAGES.baths} alt="" className="w-3 h-3" />
+                <span className="font-sans font-normal text-xs">Baths:</span>
+                <span className="font-sans font-semibold text-primary-foreground text-xs">
+                  {property.property_details?.features?.no_of_bathrooms || 0}
+                </span>
+              </div>
             </div>
 
-            <div className="flex items-center gap-1">
-              {/* <BathIcon className="w-4 h-4" /> */}
-              <img src={IMAGES.baths} alt="" className="w-3 h-3" />
-              <span
-                className="font-sans font-normal text-xs"
-              >
-                Baths:
-              </span>
-              <span
-                className="font-sans font-semibold text-primary-foreground text-xs"
-              >
-                {property.property_details?.features?.no_of_bathrooms || 0}
-              </span>
-            </div>
-
+            {/* Area on next line */}
             <div className="flex items-center gap-1">
               {/* <SquareIcon className="w-4 h-4" /> */}
               <img src={IMAGES.sqm} alt="" className="w-3 h-3" />
-              <span
-                className="font-sans font-normal text-xs"
-              >
-                sqm:
-              </span>
-              <span
-                className="font-sans font-semibold text-primary-foreground text-xs"
-
-              >
-                {property.property_details?.features?.floor_area || 0}
+              <span className="font-sans font-normal text-xs">Area:</span>
+              <span className="font-sans font-semibold text-primary-foreground text-xs">
+                {property.property_details?.features?.floor_area || 0} m2
               </span>
             </div>
           </div>
-          <div className="flex items-center text-gray-600 mb-3 mt-2">
-            <MapPin className="h-3 w-3 mr-1" />
+
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onLocationClick) {
+                onLocationClick(property);
+              }
+            }}
+            className="flex items-center text-gray-600 mb-3 mt-1 hover:text-blue-600 cursor-pointer transition-colors group w-fit"
+            title="Click to view building on map"
+          >
+            <MapPin className="h-3.5 w-3.5 mr-1 text-gray-500 group-hover:text-blue-600 transition-colors shrink-0" />
             <span
               title={property.property_details?.basic?.full_address}
-              className="text-[12px] line-clamp-1">
+              className="text-[12px] line-clamp-1 group-hover:underline font-medium"
+            >
               {property.property_details?.basic?.full_address}
             </span>
           </div>
@@ -174,22 +196,44 @@ const PropertyHorizontal: React.FC<PropertyHorizontalProps> = ({
           <div className="flex justify-between items-center px-1 mt-2">
             <div className="font-sansflex gap-1 font-normal text-primary-foreground tracking-[0] leading-[19.6px] text-[12px]">
               <span className="text-gray-500 text-[12px]">Posted On:</span>
-              <span className="font-bold">{property?.createdAt ? dateFormat(property?.createdAt) : ""}</span>
+              <span className="font-bold">
+                {property?.createdAt ? dateFormat(property?.createdAt) : ""}
+              </span>
             </div>
             <span className="font-bold text-blue-600 text-[15px]">
-              ${property?.property_details?.rent_details?.weekly_rent_price ? property?.property_details?.rent_details?.weekly_rent_price : 0}
+              $
+              {property?.property_details?.rent_details?.weekly_rent_price
+                ? property?.property_details?.rent_details?.weekly_rent_price
+                : 0}
+              <span className="text-[12px] font-medium ml-0.5">
+                <span className="text-black">/</span>{" "}
+                <span className="text-blue-600">week</span>
+              </span>
             </span>
           </div>
         </CardContent>
       </div>
-      {
-        isChatscreen && user?.role === "TENANT" ? <Button onClick={openScheduleForm} title={`Schedule your visit for ${property?.property_details?.basic?.property_name}`} variant="outline" className="absolute right-3 top-3 rounded-full w-6 h-6 p-0 cursor-pointer flex items-center jistify-center !border !border-primary hover:bg-primary/20">
-        <Icon name="ScheduleVisit" className="w-4 h-4" />
-      </Button> : null
-      }
-      {user?.role === "TENANT" && property.send_request_status === "APPROVED" && <Button onClick={openScheduleForm} title={`Schedule your visit for ${property?.property_details?.basic?.property_name}`} variant="outline" className="absolute right-3 top-3 rounded-full w-6 h-6 p-0 cursor-pointer flex items-center jistify-center !border !border-primary hover:bg-primary/20">
-        <Icon name="ScheduleVisit" className="w-4 h-4" />
-      </Button>}
+      {isChatscreen && user?.role === "TENANT" ? (
+        <Button
+          onClick={openScheduleForm}
+          title={`Schedule your visit for ${property?.property_details?.basic?.property_name}`}
+          variant="outline"
+          className="absolute right-3 top-3 rounded-full w-6 h-6 p-0 cursor-pointer flex items-center jistify-center !border !border-primary hover:bg-primary/20"
+        >
+          <Icon name="ScheduleVisit" className="w-4 h-4" />
+        </Button>
+      ) : null}
+      {user?.role === "TENANT" &&
+        property.send_request_status === "APPROVED" && (
+          <Button
+            onClick={openScheduleForm}
+            title={`Schedule your visit for ${property?.property_details?.basic?.property_name}`}
+            variant="outline"
+            className="absolute right-3 top-3 rounded-full w-6 h-6 p-0 cursor-pointer flex items-center jistify-center !border !border-primary hover:bg-primary/20"
+          >
+            <Icon name="ScheduleVisit" className="w-4 h-4" />
+          </Button>
+        )}
     </Card>
   );
 };

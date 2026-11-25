@@ -10,6 +10,7 @@ import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { useNavigate } from "react-router-dom";
 import { verifySubscriptionPlanApi } from "../../actions/subscriptions";
+import { useAuth } from "../../context/AuthContext";
 
 const elementStyle = {
   style: {
@@ -30,6 +31,7 @@ const CheckoutForm = ({ clientSecret, price, user_object_id, payment_intent_id }
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
+  const { updateUser, refreshUser } = useAuth();
 
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -56,7 +58,7 @@ const CheckoutForm = ({ clientSecret, price, user_object_id, payment_intent_id }
       return;
     }
 
-     const { paymentIntent } = await stripe.confirmCardPayment(
+    const { paymentIntent, error: confirmError } = await stripe.confirmCardPayment(
       clientSecret,
       {
         payment_method: {
@@ -66,16 +68,24 @@ const CheckoutForm = ({ clientSecret, price, user_object_id, payment_intent_id }
       }
     );
 
+    if (confirmError) {
+      setError(confirmError.message || "Payment confirmation failed");
+      setLoading(false);
+      return;
+    }
+
     const isVerified = await verifySubscriptionPlanApi({
       member_objectId: user_object_id,
       paymentIntent_id: payment_intent_id,
       payment_respons: paymentIntent ? paymentIntent : []
     });
     console.log("isVerified ::: ", isVerified);
-    
 
-    if (paymentIntent?.status === "succeeded") {
-      navigate("/payment-success");
+    updateUser({ is_subscribe: true });
+    try {
+      await refreshUser();
+    } catch (err) {
+      console.warn("Could not sync profile after subscription verification:", err);
     }
 
     navigate("/payment-success");

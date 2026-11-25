@@ -237,11 +237,15 @@ export const getAllPropertyCMS = async (
 };
 
 export const getSavedProperty = async (
-  params: { search?: string; page?: number; limit?: number; propertyType?:string } = {},
+  params: { search?: string; page?: number; limit?: number; propertyType?: string } = {},
 ) => {
   const { page, limit, propertyType } = params;
   const url =
-    page && limit ? SAVED_PROPERTY + `/${page}/${limit}/${propertyType}` : SAVED_PROPERTY;
+    page && limit
+      ? propertyType
+        ? `${SAVED_PROPERTY}/${page}/${limit}/${propertyType}`
+        : `${SAVED_PROPERTY}/${page}/${limit}`
+      : SAVED_PROPERTY;
   const res = await api.get(url, { params: { search: params.search } });
   return res.data;
 };

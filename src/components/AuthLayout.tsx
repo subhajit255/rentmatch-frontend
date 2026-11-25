@@ -8,7 +8,13 @@ import Footer from "./Layout/Footer";
 
 const AuthLayout = () => {
     const location = useLocation();
-    const isLoginPage = ["/login", "/admin/login", "/super-admin/login"].includes(location.pathname);
+    const isLoginPage = [
+      "/login",
+      "/admin/login",
+      "/super-admin/login",
+      "/registration",
+      "/email-verification",
+    ].some((path) => location.pathname.startsWith(path));
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -29,9 +35,11 @@ const AuthLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <div className="w-full bg-accent font-sans ">
+        <div className="w-full min-h-screen flex flex-col justify-between bg-[#F8FAFC] font-sans">
             {!isLoginPage && <Navbar />}
-            <Outlet />
+            <div className="flex-1 flex flex-col">
+                <Outlet />
+            </div>
             {!isLoginPage && <Footer />}
         </div>
     );

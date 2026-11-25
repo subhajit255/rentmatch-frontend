@@ -6,6 +6,7 @@ import RentalPlansSection from "./sections/RentalPlansSection/RentalPlansSection
 import FAQsSection from "./sections/FAQsSection/FAQsSection";
 import TestimonialsSection from "./sections/TestimonialsSection/TestimonialsSection";
 import SearchTenant from "./sections/SearchTenant/SearchTenant";
+import FindTenantHero from "./sections/FindTenantHero/FindTenantHero";
 import { IMAGES } from "../../../../assets/index";
 
 // export const FindTenant = (): JSX.Element => {
@@ -13,6 +14,7 @@ const FindTenant = () => {
 
   return (
     <>
+      <FindTenantHero />
       <SearchTenant />
 
       <RentalPlansSection />

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom"; // Import useNavigate for navigation
+import { Link, useNavigate, useParams } from "react-router-dom"; // Import useNavigate for navigation
 import { IMAGES } from "../../assets/index";
 import { Card, CardContent } from "../ui/card";
 import { Input } from "../ui/input";
@@ -15,6 +15,8 @@ import { getOtpSchema } from "@/src/types/authTypes";
 import { Eye, EyeOff, Mail, Clock, Edit2, Loader2, ArrowRight, User, Home, Briefcase, ShieldCheck } from "lucide-react";
 import { changePasswordSchema, forgotEmailSchema, forgotOtpSchema } from "../../schemas/auth";
 import { FormError } from "../errors";
+import NavbarSection from "../ContentMangementSystem/screens/Landing/sections/NavbarSection/NavbarSection";
+import FooterSection from "../ContentMangementSystem/screens/Landing/sections/FooterSection/FooterSection";
 
 interface EmailVerificationProps {
   onChange?: (value: string) => void;
@@ -280,7 +282,7 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({ onChange }) => {
   const roles = [
     { value: "TENANT", label: "Tenant", description: "Find the perfect rental property match", icon: Home },
     { value: "LANDLORD", label: "Landlord", description: "List properties and match with tenants", icon: User },
-    { value: "PROPERTY MANAGER", label: "Property Manager", description: "Manage rental portfolios seamlessly", icon: Briefcase },
+    { value: "PROPERTY MANAGER", label: "Real Estate Professional", description: "Request an agency account and manage properties", icon: Briefcase },
     // admins can only reset their password here (backend picks the admin model by role)
     ...(page === "forgot-pass"
       ? [
@@ -291,38 +293,36 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({ onChange }) => {
   ];
 
   return (
-    <main className="flex-1 flex items-center justify-center px-4 py-12 md:py-20 relative overflow-hidden bg-slate-50/50">
-      {/* Decorative background gradients */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10 translate-x-1/3 -translate-y-1/3" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl -z-10 -translate-x-1/3 translate-y-1/3" />
+    <div className="min-h-screen flex flex-col justify-between bg-[#EFF4FB] font-sans">
+      <NavbarSection />
 
-      <div className="w-full max-w-2xl relative z-10">
-        <div className="text-center mb-8">
-          <p className="text-xs font-bold text-primary tracking-[0.2em] uppercase mb-2">
+      <main className="w-full max-w-2xl mx-auto px-4 pt-4 sm:pt-6 pb-12 flex-1">
+        <div className="text-center mb-5">
+          <span className="inline-block px-3 py-0.5 rounded-md text-[11px] font-bold tracking-wider uppercase bg-[#E8F8EE] text-[#0F7A4A] mb-1.5">
             RentMatch Account
-          </p>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E3A8A] tracking-tight mb-1">
             {page === "forgot-pass" ? "Forgot Your Password?" : "Create an Account"}
           </h1>
-          <p className="text-sm text-slate-500 mt-2 max-w-md mx-auto">
+          <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
             {page === "forgot-pass"
               ? "Confirm your email and set a new password to regain access to your account."
               : "Verify your email to get started with Australia's smarter rental matching platform."}
           </p>
         </div>
 
-        <Card className="overflow-hidden shadow-xl shadow-slate-200/50 bg-white border border-slate-100 rounded-[2rem]">
-          <CardContent className="p-6 md:p-10">
-            <div className="w-full mx-auto space-y-8">
+        <Card className="overflow-hidden shadow-lg shadow-slate-200/50 bg-white border border-slate-100 rounded-[1.75rem]">
+          <CardContent className="p-5 sm:p-7 md:p-8">
+            <div className="w-full mx-auto space-y-5">
               {/* Role Selection Grid */}
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
                 <Label
                   htmlFor="role"
-                  className="text-sm font-semibold text-slate-700"
+                  className="text-xs font-bold text-slate-700 uppercase tracking-wider"
                 >
                   I Will Join As
                 </Label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {roles.map((item) => {
                     const isSelected = getOtpPayload.role === item.value;
                     const IconComponent = item.icon;
@@ -333,27 +333,27 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({ onChange }) => {
                           setErrors((prev) => ({ ...prev, role: "" }));
                           setGetOtpPayload((prev) => ({ ...prev, role: item.value as any }));
                         }}
-                        className={`cursor-pointer p-5 rounded-2xl border-2 transition-all duration-300 flex flex-col gap-3 hover:shadow-md ${isSelected
-                            ? "border-primary bg-primary/5 shadow-sm"
+                        className={`cursor-pointer p-3.5 sm:p-4 rounded-xl border-2 transition-all duration-200 flex flex-col gap-2 hover:shadow-sm ${isSelected
+                            ? "border-[#1E40AF] bg-[#EEF4FF]/50 shadow-xs"
                             : "border-slate-100 bg-white hover:border-slate-200"
                           }`}
                       >
                         <div className="flex items-center justify-between">
-                          <div className={`p-2 rounded-xl ${isSelected ? "bg-primary/10 text-primary" : "bg-slate-50 text-slate-500"}`}>
-                            <IconComponent className="w-5 h-5" />
+                          <div className={`p-1.5 rounded-lg ${isSelected ? "bg-[#EEF4FF] text-[#1E40AF]" : "bg-slate-50 text-slate-500"}`}>
+                            <IconComponent className="w-4 h-4" />
                           </div>
                           <div
-                            className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${isSelected ? "border-primary bg-primary" : "border-slate-300"
+                            className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-all ${isSelected ? "border-[#1E40AF] bg-[#1E40AF]" : "border-slate-300"
                               }`}
                           >
-                            {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            {isSelected && <div className="w-1 h-1 rounded-full bg-white" />}
                           </div>
                         </div>
                         <div>
-                          <span className={`font-bold text-sm block mb-1 transition-colors ${isSelected ? "text-primary" : "text-slate-800"}`}>
+                          <span className={`font-bold text-xs sm:text-sm block mb-0.5 transition-colors ${isSelected ? "text-[#1E40AF]" : "text-slate-800"}`}>
                             {item.label}
                           </span>
-                          <p className="text-xs text-slate-500 leading-normal">
+                          <p className="text-[11px] text-slate-500 leading-snug">
                             {item.description}
                           </p>
                         </div>
@@ -566,8 +566,9 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({ onChange }) => {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </main>
+      </main>
+      <FooterSection />
+    </div>
   );
 };
 

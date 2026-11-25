@@ -23,6 +23,7 @@ import { cn } from "../lib/utils";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { useAuth } from "../../context/AuthContext";
+import { Check } from "lucide-react";
 
 const SubscriptionCard = ({
   features,
@@ -112,20 +113,117 @@ const SubscriptionCard = ({
     });
   };
 
-  const checkout = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // console.log("Selected plan id : ", e.target.id);
-    if (user?.is_subscribe) {
+  const isCurrentPlan = Boolean(user?.is_subscribe);
+
+  const handleSelectPlan = () => {
+    if (isCurrentPlan) return;
+    const planId = plan?._id || plan?.id;
+    const token =
+      localStorage.getItem("auth_token") ||
+      localStorage.getItem("token") ||
+      localStorage.getItem("@jwt");
+
+    if (!token || !user) {
       toast({
-        title: `Already Subscribed`,
-        description: `You already have an active subscription.`,
-        variant: "info",
+        title: "Please Log In",
+        description: "Please log in to your account to subscribe to this plan.",
+        variant: "default",
+      });
+      navigate("/login", {
+        state: {
+          from: "/checkout",
+          plan_id: planId,
+          plan_details: plan,
+        },
       });
       return;
     }
+
     navigate("/checkout", {
-      state: { plan_id: e.target.id, plan_details: plan },
+      state: { plan_id: planId, plan_details: plan },
     });
   };
+
+  if (!isAdmin) {
+    return (
+      <div
+        onClick={!isCurrentPlan ? handleSelectPlan : undefined}
+        className={cn(
+          "bg-white rounded-2xl p-6 sm:p-7 border shadow-xs transition-all flex flex-col justify-between h-full relative",
+          isCurrentPlan
+            ? "border-emerald-500/80 ring-2 ring-emerald-500/20"
+            : "border-slate-200 hover:shadow-md cursor-pointer"
+        )}
+      >
+        <div>
+          {isCurrentPlan && (
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full w-fit mb-3">
+              <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Current Plan</span>
+            </div>
+          )}
+          <div className="flex items-baseline gap-1.5 mb-3">
+            <span className="font-bold text-slate-900 text-3xl sm:text-4xl tracking-tight">
+              ${price}
+            </span>
+            <span className="font-normal text-slate-500 text-sm">
+              /{cycles_for_subscription?.toLowerCase() ?? "monthly"}
+            </span>
+          </div>
+
+          <h3 className="font-bold text-slate-900 text-xl mb-1.5">
+            {name}
+          </h3>
+
+          <p className="text-slate-500 text-sm leading-relaxed mb-5">
+            {description}
+          </p>
+
+          <div className="border-t border-slate-100 pt-5 mb-6">
+            <ul className="flex flex-col gap-3">
+              {Array.isArray(plan?.features) && plan.features.length > 0 ? (
+                plan.features.map(
+                  (feature: any, i: number) => (
+                    <li key={feature?._id || i} className="flex items-start gap-2.5 text-sm text-slate-700">
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5 stroke-[2.5]" />
+                      <span className="leading-snug">{feature?.title || feature?.name}</span>
+                    </li>
+                  )
+                )
+              ) : (
+                features?.map((feature: any, i: number) => (
+                  <li key={feature?.id || i} className="flex items-start gap-2.5 text-sm text-slate-700">
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5 stroke-[2.5]" />
+                    <span className="leading-snug">{feature?.name}</span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+        </div>
+
+        {isCurrentPlan ? (
+          <Button
+            disabled
+            className="w-full mt-4 bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold text-sm py-2.5 h-11 rounded-xl shadow-none cursor-default opacity-100 hover:bg-emerald-50"
+          >
+            <Check className="w-4 h-4 mr-1.5 stroke-[2.5]" />
+            Current Active Plan
+          </Button>
+        ) : (
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSelectPlan();
+            }}
+            className="w-full mt-4 bg-primary hover:bg-primary/95 text-white font-semibold text-sm py-2.5 h-11 rounded-xl shadow-none transition-all"
+          >
+            Choose Plan
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <Label htmlFor={plan.id}>
@@ -133,22 +231,12 @@ const SubscriptionCard = ({
         <CardHeader className="flex flex-row items-center justify-between p-0 mb-4 w-full">
           <div className="flex items-center gap-2">
             <span className="font-bold text-primary text-4xl m-0 ">
-              {price}
+              ${price}
             </span>
             <span className="text-xl font-semibold/[1.2] text-secondary-foreground">
               /{cycles_for_subscription?.toLocaleLowerCase() ?? "monthly"}
             </span>
           </div>
-          {!isAdmin && (
-            <Input
-              id={plan.id}
-              // selected={user?.subscription?._id === plan.id}
-              name="subscription-card"
-              onChange={checkout}
-              type="radio"
-              className="w-4 h-4 absolute right-3 top-3"
-            />
-          )}
           {isAdmin && (
             <div>
               <div
@@ -185,12 +273,6 @@ const SubscriptionCard = ({
             </div>
             <div className="text-xs text-muted-foreground py-6 flex flex-col gap-2 border-t-2 border-card-border">
               <ul className="flex flex-col gap-4">
-                {/* {plan?.features?.map((feature: { icon: IconName | string, title: string, id: number }) => (
-                            <li key={feature?.id} className="flex items-center gap-2">
-                                <Icon name={'CheckIcon'} className="w-4 h-4 font-bold text-active" />
-                                <span className="text-secondary-foreground text-md/[1.8]">{feature?.title}</span>
-                            </li>
-                        ))} */}
                 {Array.isArray(plan?.features) &&
                   plan.features.map(
                     (feature: {

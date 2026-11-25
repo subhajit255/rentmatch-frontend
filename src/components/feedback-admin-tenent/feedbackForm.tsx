@@ -24,7 +24,11 @@ const feedbackSchema = z.object({
 
 type FeedbackFormValues = z.infer<typeof feedbackSchema>;
 
-const FeedbackModal = () => {
+interface FeedbackModalProps {
+    trigger?: React.ReactNode;
+}
+
+const FeedbackModal: React.FC<FeedbackModalProps> = ({ trigger }) => {
   const queryClient = useQueryClient();
 
     const [open, setOpen] = useState(false);
@@ -77,10 +81,14 @@ const FeedbackModal = () => {
     return (
         <Dialog.Root open={open} onOpenChange={setOpen}>
             <Dialog.Trigger asChild>
-                <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                    <MessageSquarePlus size={18} />
-                    Give Feedback
-                </button>
+                {trigger ? (
+                    trigger
+                ) : (
+                    <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        <MessageSquarePlus size={18} />
+                        Give Feedback
+                    </button>
+                )}
             </Dialog.Trigger>
 
             <Dialog.Portal>

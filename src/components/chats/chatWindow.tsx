@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Icon from "../icons/icon";
 import { getChatContent, sendMessage } from "../../actions/chatApis";
 import PropertyHorizontal from "../ChildComponent/Common/PropertyHorizontal";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MoreVertical, VolumeX, Ban, Flag, X } from "lucide-react";
+import { toast } from "../../custom-hooks/use-toast";
 
 // import PropertyHorizontal from "../ChildComponent/PropertyHorizontal";
 // import { useSocket } from "../../context/SocketContext";
@@ -34,13 +35,101 @@ const ChatWindow = ({ selectedForChat, showOnMobile = true, onBack }: { selected
   // const { socket } = useSocket();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [messageText, setMessageText] = useState("");
   const [typing, setTyping] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("scam");
+  const [reportDetails, setReportDetails] = useState("");
 
-
-  // console.log(selectedForChat, "<--sel f chat");
-  // const shouldFetch = !!selectedForChat?.userId;
   const otherUserId = selectedForChat?.userId;
+  const targetName = selectedForChat?.fullName || "User";
+  const firstName = targetName.split(" ")[0] || "User";
+
+  // Muted & Blocked conversations persisted in localStorage
+  const [mutedUsers, setMutedUsers] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("rentmatch_muted_chats") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  const [blockedUsers, setBlockedUsers] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("rentmatch_blocked_chats") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  const isMuted = otherUserId ? mutedUsers.includes(otherUserId) : false;
+  const isBlocked = otherUserId ? blockedUsers.includes(otherUserId) : false;
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [dropdownOpen]);
+
+  const handleToggleMute = () => {
+    if (!otherUserId) return;
+    const nextMuted = isMuted
+      ? mutedUsers.filter((id) => id !== otherUserId)
+      : [...mutedUsers, otherUserId];
+    setMutedUsers(nextMuted);
+    localStorage.setItem("rentmatch_muted_chats", JSON.stringify(nextMuted));
+    setDropdownOpen(false);
+    toast({
+      title: isMuted ? "Conversation Unmuted" : "Conversation Muted",
+      description: isMuted
+        ? `Notifications for ${targetName} have been restored.`
+        : `Notifications for this chat with ${targetName} have been muted.`,
+      variant: "success",
+    });
+  };
+
+  const handleToggleBlock = () => {
+    if (!otherUserId) return;
+    const nextBlocked = isBlocked
+      ? blockedUsers.filter((id) => id !== otherUserId)
+      : [...blockedUsers, otherUserId];
+    setBlockedUsers(nextBlocked);
+    localStorage.setItem("rentmatch_blocked_chats", JSON.stringify(nextBlocked));
+    setDropdownOpen(false);
+    toast({
+      title: isBlocked ? `${targetName} Unblocked` : `${targetName} Blocked`,
+      description: isBlocked
+        ? `You can now send and receive messages with ${targetName}.`
+        : `You will no longer receive new messages from ${targetName}.`,
+      variant: isBlocked ? "success" : "default",
+    });
+  };
+
+  const handleOpenReport = () => {
+    setDropdownOpen(false);
+    setReportModalOpen(true);
+  };
+
+  const handleSubmitReport = (e: React.FormEvent) => {
+    e.preventDefault();
+    setReportModalOpen(false);
+    setReportDetails("");
+    toast({
+      title: "Report Submitted",
+      description: `Thank you. Our moderation team will review this chat with ${targetName}.`,
+      variant: "success",
+    });
+  };
   const shouldFetch = !!otherUserId;
 
   const queryKey = ["chat-content", otherUserId, selectedForChat];
@@ -362,48 +451,92 @@ const ChatWindow = ({ selectedForChat, showOnMobile = true, onBack }: { selected
   return (
     <div className={`${showOnMobile ? "flex" : "hidden md:flex"} flex-1 min-w-0 flex-col bg-white  rounded-md`}>
       {/* Header */}
-      {messages.length > 0 ? (
-        <div className="px-6 py-4 border-b flex items-center justify-between bg-secondary/20 rounded-t-md">
+      {selectedForChat && (
+        <div className="px-6 py-4 border-b flex items-center justify-between bg-[#F1F5F9]/60 rounded-t-xl relative">
           <div className="flex items-center gap-3">
             {onBack && (
               <button
                 type="button"
                 onClick={onBack}
-                className="md:hidden -ml-2 p-2 rounded-full hover:bg-accent"
+                className="md:hidden -ml-2 p-2 rounded-full hover:bg-slate-200/60 transition-colors"
                 aria-label="Back to contacts"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-5 h-5 text-slate-700" />
               </button>
             )}
-            <img
-              src={
-                selectedForChat?.profileImage ||
-                "https://i.pravatar.cc/40?img=1"
-              }
-              className="w-10 h-10 rounded-full"
-            />
+            <div className="relative">
+              {selectedForChat?.profileImage ? (
+                <img
+                  src={selectedForChat.profileImage}
+                  alt={targetName}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-[#1E3A8A] flex items-center justify-center text-white font-semibold text-sm shadow-xs">
+                  {targetName.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
             <div>
-              <h3 className="font-semibold text-sm">
-                {selectedForChat?.fullName || "Select a contact"}
-              </h3>
-              <p className="text-xs text-gray-500">{selectedForChat?.role}</p>
+              <div className="flex items-center gap-1.5">
+                <h3 className="font-bold text-[15px] text-slate-900 leading-tight">
+                  {targetName}
+                </h3>
+                {isMuted && (
+                  <span title="Conversation muted">
+                    <VolumeX className="w-3.5 h-3.5 text-slate-400" />
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">
+                {selectedForChat?.role || "USER"}
+              </p>
             </div>
           </div>
-          {/* <button className="text-gray-400">⋮</button> */}
+
+          {/* Three-dots menu dropdown matching screenshot */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              type="button"
+              onClick={() => setDropdownOpen((prev) => !prev)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-slate-200/80 hover:bg-slate-50 transition-all text-slate-600 shadow-2xs cursor-pointer focus:outline-none"
+              aria-label="Chat options"
+            >
+              <MoreVertical className="w-4 h-4 text-slate-600" />
+            </button>
+
+            {dropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-56 z-50 bg-white rounded-2xl shadow-xl border border-slate-100 p-1.5 animate-in fade-in zoom-in-95 duration-150">
+                <button
+                  type="button"
+                  onClick={handleToggleMute}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-xl transition-colors text-left cursor-pointer"
+                >
+                  <VolumeX className="w-4 h-4 text-slate-600 shrink-0" />
+                  <span>{isMuted ? "Unmute conversation" : "Mute conversation"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleToggleBlock}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-xl transition-colors text-left cursor-pointer"
+                >
+                  <Ban className="w-4 h-4 text-slate-600 shrink-0" />
+                  <span>{isBlocked ? `Unblock ${firstName}` : `Block ${firstName}`}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleOpenReport}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50/80 rounded-xl transition-colors text-left cursor-pointer"
+                >
+                  <Flag className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>Report this chat</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      ) : onBack ? (
-        <div className="md:hidden px-4 py-3 border-b">
-          <button
-            type="button"
-            onClick={onBack}
-            className="p-2 rounded-full hover:bg-accent"
-            aria-label="Back to contacts"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        </div>
-      ) : (
-        ""
       )}
 
       {/* Message  */}
@@ -473,8 +606,30 @@ const ChatWindow = ({ selectedForChat, showOnMobile = true, onBack }: { selected
         </button>
       </div> */}
 
-      {messages.length > 0 ? (
-        <form onSubmit={handleSend} className="p-4 border-t bg-white">
+      {/* Safety Notice Reminder (matching screenshot) */}
+      <div className="px-6 py-2 border-t border-slate-100 bg-white">
+        <p className="text-[11px] sm:text-xs text-slate-400 leading-snug">
+          Never pay a deposit or share bank details before you have inspected the property. Messages are checked for scams.
+        </p>
+      </div>
+
+      {/* Input or Blocked Banner */}
+      {isBlocked ? (
+        <div className="p-4 mx-6 mb-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between gap-3 text-xs sm:text-sm text-slate-600">
+          <span className="flex items-center gap-2">
+            <Ban className="w-4 h-4 text-rose-500 shrink-0" />
+            You have blocked {targetName}. Unblock to send and receive messages.
+          </span>
+          <button
+            type="button"
+            onClick={handleToggleBlock}
+            className="text-xs font-semibold px-3 py-1.5 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
+          >
+            Unblock
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={handleSend} className="p-4 bg-white">
           <div className="flex items-center gap-2">
             <input
               value={messageText}
@@ -492,14 +647,103 @@ const ChatWindow = ({ selectedForChat, showOnMobile = true, onBack }: { selected
             <button
               type="submit"
               disabled={!messageText.trim() || sendMutation.isPending}
-              className="p-3 bg-primary text-white rounded-full hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-3 bg-primary text-white rounded-full hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
               <Icon name="Send" className="w-5 h-5" />
             </button>
           </div>
         </form>
-      ) : (
-        ""
+      )}
+
+      {/* Report Modal */}
+      {reportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                  <Flag className="w-4 h-4 stroke-[2.5]" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900">Report this chat</h3>
+                  <p className="text-xs text-slate-500">Report conversation with {targetName}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReportModalOpen(false)}
+                className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitReport} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  Reason for reporting
+                </label>
+                <div className="space-y-1.5">
+                  {[
+                    { id: "scam", label: "Scam or fraudulent activity" },
+                    { id: "harassment", label: "Harassment or inappropriate language" },
+                    { id: "offplatform", label: "Requested payment outside RentMatch" },
+                    { id: "spam", label: "Spam or misleading information" },
+                    { id: "other", label: "Other issue" },
+                  ].map((option) => (
+                    <label
+                      key={option.id}
+                      className={`flex items-center gap-3 p-3 rounded-xl border text-sm cursor-pointer transition-all ${
+                        reportReason === option.id
+                          ? "border-primary bg-blue-50/50 text-primary font-medium"
+                          : "border-slate-200 hover:bg-slate-50 text-slate-700"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="reportReason"
+                        value={option.id}
+                        checked={reportReason === option.id}
+                        onChange={() => setReportReason(option.id)}
+                        className="accent-primary"
+                      />
+                      <span>{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  Additional Details (Optional)
+                </label>
+                <textarea
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  placeholder="Provide any additional context for our safety team..."
+                  rows={3}
+                  className="w-full text-sm border border-slate-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setReportModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold transition-colors shadow-xs cursor-pointer"
+                >
+                  Submit Report
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { getMyprofileInfo } from "../actions/common";
 
 export interface User {
   id: string;
@@ -27,6 +28,8 @@ export interface AuthContextType {
   loading: boolean;
   login: (userData: User, token: string, rolePermission?: any) => void;
   logout: () => void;
+  updateUser: (updatedFields: Partial<User>) => void;
+  refreshUser: () => Promise<User | null>;
 }
 
 // Create Context
@@ -38,20 +41,81 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);  // stores auth token
   const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage on mount
+  // Load user from localStorage on mount and sync fresh status from backend
   useEffect(() => {
-    const storedUser = localStorage.getItem("user_info");
-    const storedToken = localStorage.getItem("auth_token");
+    let isMounted = true;
 
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    if(storedToken){
-      setToken(storedToken);
-    }
+    const initAuth = async () => {
+      const storedUser = localStorage.getItem("user_info");
+      const storedToken = localStorage.getItem("auth_token");
 
-    setLoading(false);
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (e) {
+          console.error("Failed to parse stored user", e);
+        }
+      }
+
+      if (storedToken) {
+        setToken(storedToken);
+        try {
+          // Fetch fresh profile from backend before releasing route guard
+          // so subscription and role status are always 100% accurate.
+          const profileData = await getMyprofileInfo();
+          const freshUser = profileData?.result?.userDetails;
+          if (freshUser && isMounted) {
+            setUser((prev) => {
+              const merged = { ...(prev || {}), ...freshUser };
+              localStorage.setItem("user_info", JSON.stringify(merged));
+              return merged;
+            });
+          }
+        } catch (err) {
+          console.warn("Could not sync user profile on mount:", err);
+        }
+      }
+
+      if (isMounted) {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  const updateUser = (updatedFields: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return null;
+      const updated = { ...prev, ...updatedFields };
+      localStorage.setItem("user_info", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const refreshUser = async (): Promise<User | null> => {
+    try {
+      const authToken = localStorage.getItem("auth_token") || token;
+      if (!authToken) return null;
+      const profileData = await getMyprofileInfo();
+      const freshUser = profileData?.result?.userDetails;
+      if (freshUser) {
+        setUser((prev) => {
+          const merged = { ...(prev || {}), ...freshUser };
+          localStorage.setItem("user_info", JSON.stringify(merged));
+          return merged;
+        });
+        return freshUser;
+      }
+    } catch (err) {
+      console.error("Failed to refresh user profile:", err);
+    }
+    return null;
+  };
 
   // Login function (can be called after successful login)
   const login = (userData: User, token: string, rolePermission?:any) => {
@@ -77,7 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, refreshUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

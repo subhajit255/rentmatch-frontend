@@ -1,9 +1,15 @@
-import React, { useEffect, useRef } from "react";
-import { Label } from "../../ui/label";
+import React, { useState, useRef, useEffect } from "react";
 import { Required } from "../../ui/miscellenious";
-import { Checkbox } from "../../ui/checkbox";
-import Icon from "../../icons/icon";
-import { DocumentsPayload } from "@/src/types/property";
+import { DocumentsPayload, DocItem } from "@/src/types/property";
+import {
+  UploadCloud,
+  X,
+  FileText,
+  Film,
+  Image as ImageIcon,
+  CheckCircle2,
+} from "lucide-react";
+import { cn } from "../../../lib/utils";
 
 /* ----------------------- PROPS ----------------------- */
 
@@ -18,62 +24,26 @@ const PropertyDocument: React.FC<PropertyDocumentProps> = ({
   documents,
   setDocuments,
 }) => {
-  const imageInput = useRef<HTMLInputElement>(null);
-  const videoInput = useRef<HTMLInputElement>(null);
-  const floorInput = useRef<HTMLInputElement>(null);
+  /* ----------------------- ADD FILES ----------------------- */
+  const handleAddFiles = (files: File[], type: keyof DocumentsPayload) => {
+    if (!files.length) return;
 
-  /* ----------------------- ADD FILE ----------------------- */
-
-  const handleAddFile = (
-
-    e: React.ChangeEvent<HTMLInputElement>,
-
-    type: keyof DocumentsPayload
-
-  ) => {
-
-    if (!e.target.files?.length) return;
-
-    const newFiles = Array.from(e.target.files)
-
+    const newFiles: DocItem[] = files
       .filter((file) => file instanceof File && file.size > 0)
-
       .map((file) => ({
-
         data: file,
-
+        name: file.name,
       }));
 
     if (!newFiles.length) return;
 
     setDocuments((prev) => ({
-
       ...prev,
-
-      [type]: [...prev[type], ...newFiles],
-
-    }));
-
-    e.target.value = "";
-
-  };
-
-  useEffect(() => {
-    console.log("documents in PropertyDocument ::: ", documents);
-  }, [documents])
-
-  /* ----------------------- FEATURE IMAGE ----------------------- */
-
-  const setFeaturedImage = (index: number) => {
-    setDocuments((prev) => ({
-      ...prev,
-      images: prev.images.map((img, i) => ({
-        ...img,
-        is_featured: i === index,
-      })),
+      [type]: [...(prev[type] || []), ...newFiles],
     }));
   };
 
+  /* ----------------------- REMOVE FILE ----------------------- */
   const removeFile = (type: keyof DocumentsPayload, index: number) => {
     setDocuments((prev) => ({
       ...prev,
@@ -82,129 +52,103 @@ const PropertyDocument: React.FC<PropertyDocumentProps> = ({
   };
 
   return (
-    <div className="flex flex-col min-h-[50dvh] 2xl:min-h-[80dvh] gap-9">
-      {/* ===================== IMAGES ===================== */}
-      <SectionBlock title="Images" required>
-        <input
-          ref={imageInput}
-          type="file"
+    <div className="flex flex-col gap-8 pb-4">
+      {/* ===================== IMAGES SECTION ===================== */}
+      <DocumentSection
+        title="Images"
+        count={documents.images.length}
+        required
+        icon={<ImageIcon className="w-5 h-5 text-blue-600" />}
+        description="Upload high-quality images of your property."
+      >
+        <DropzoneBox
+          typeLabel="images"
           accept="image/*"
-          hidden
-          onChange={(e) => handleAddFile(e, "images")}
+          multiple={true}
+          hint="Supported formats: PNG, JPG, JPEG, WEBP (up to 10MB each)"
+          icon={<UploadCloud className="w-6 h-6 text-blue-600" />}
+          onFilesSelected={(files) => handleAddFiles(files, "images")}
         />
 
-        <ChooseCard
-          command="Drag or upload your property images"
-          onClick={() => imageInput.current?.click()}
-        />
+        {documents.images.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 mt-4">
+            {documents.images.map((item, index) => (
+              <ImagePreviewCard
+                key={
+                  item._id ||
+                  (item.data instanceof File
+                    ? `${item.data.name}-${index}`
+                    : index)
+                }
+                item={item}
+                onRemove={() => removeFile("images", index)}
+              />
+            ))}
+          </div>
+        )}
+      </DocumentSection>
 
-        {documents.images.map((item, index) => (
-          <ImageCard
-            key={`${item.data}-${index}`}
-            file={item?.data ?? item?.url!}
-            checked={item.is_featured || false}
-            onCheck={() => setFeaturedImage(index)}
-            onRemove={() => removeFile("images", index)}
-          />
-        ))}
-      </SectionBlock>
-
-      {/* ===================== VIDEOS ===================== */}
-      <SectionBlock title="Video">
-        <input
-          ref={videoInput}
-          type="file"
+      {/* ===================== VIDEO SECTION ===================== */}
+      <DocumentSection
+        title="Video Walkthrough"
+        count={documents.videos.length}
+        icon={<Film className="w-5 h-5 text-indigo-600" />}
+        description="Add a virtual tour or walkthrough video of the property."
+      >
+        <DropzoneBox
+          typeLabel="video"
           accept="video/*"
-          hidden
-          onChange={(e) => handleAddFile(e, "videos")}
+          multiple={false}
+          hint="Supported formats: MP4, MOV, WEBM (up to 100MB)"
+          icon={<Film className="w-6 h-6 text-indigo-600" />}
+          onFilesSelected={(files) => handleAddFiles(files, "videos")}
         />
 
-        <ChooseCard
-          command="Drag or upload your property video"
-          onClick={() => videoInput.current?.click()}
+        {documents.videos.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            {documents.videos
+              .filter((item: any) => item.url || item.data instanceof File)
+              .map((item: any, index) => (
+                <VideoPreviewCard
+                  key={item._id || index}
+                  item={item}
+                  onRemove={() => removeFile("videos", index)}
+                />
+              ))}
+          </div>
+        )}
+      </DocumentSection>
+
+      {/* ===================== FLOOR PLAN SECTION ===================== */}
+      <DocumentSection
+        title="Floor Plan"
+        count={documents.floor_plans.length}
+        icon={<FileText className="w-5 h-5 text-emerald-600" />}
+        description="Upload architectural diagrams, layouts, or floor plan documents."
+      >
+        <DropzoneBox
+          typeLabel="floor plan"
+          accept="image/*,application/pdf"
+          multiple={true}
+          hint="Supported formats: PNG, JPG, PDF (up to 10MB)"
+          icon={<FileText className="w-6 h-6 text-emerald-600" />}
+          onFilesSelected={(files) => handleAddFiles(files, "floor_plans")}
         />
 
-        {documents.videos
-          .filter((item: any) => item.url || item.data instanceof File)
-          .map((item: any, index) => {
-            const key =
-              item.url ??
-              `${item.data.name}-${item.data.size}-${item.data.lastModified}`;
-            return (
-              <VideoCard
-                key={key}
-                file={item.url || item.data}
-                index={index}
-                onRemove={(idx) => {
-                  setDocuments((prev) => ({
-                    ...prev,
-                    videos: prev.videos.filter((_, i) => i !== idx),
-                  }));
-                }}
-              />
-            );
-          })}
-      </SectionBlock>
-
-      {/* ===================== FLOOR PLAN ===================== */}
-      <SectionBlock title="Floor Plan">
-        <input
-          ref={floorInput}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={(e) => handleAddFile(e, "floor_plans")}
-        />
-
-        <ChooseCard
-          command="Drag or upload your property floor plan"
-          onClick={() => floorInput.current?.click()}
-        />
-
-        {documents.floor_plans
-          .filter((item: any) => item.url || item.data instanceof File)
-          .map((item: any, index) => {
-            const key =
-              item.url ??
-              `${item.data.name}-${item.data.size}-${item.data.lastModified}`;
-            return (
-              <FileCard
-                key={key}
-                file={item.name || item.data}
-                index={index}
-                onRemove={(idx) => {
-                  setDocuments((prev) => ({
-                    ...prev,
-                    floor_plans: prev.floor_plans.filter((_, i) => i !== idx),
-                  }));
-                }}
-              />
-            );
-          })}
-
-        {/* {documents.floor_plans.map((item: any, index) => {
-          const key =
-            item.url ??
-            `${item.data.name}-${item.data.size}-${item.data.lastModified}`;
-          return (
-            item.data && (
-              <FileCard
-                key={key}
-                file={item.url || item.data}
-                index={index}
-                onRemove={(idx: any) => {
-                  setDocuments((prev) => ({
-                    ...prev,
-                    floor_plans: prev.floor_plans.filter((_, i) => i !== idx),
-                  }));
-                }}
-              />
-            )
-          )
-        }
-
-        )} */}
-      </SectionBlock>
+        {documents.floor_plans.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 mt-4">
+            {documents.floor_plans
+              .filter((item: any) => item.url || item.data)
+              .map((item: any, index) => (
+                <FilePreviewCard
+                  key={item._id || index}
+                  item={item}
+                  onRemove={() => removeFile("floor_plans", index)}
+                />
+              ))}
+          </div>
+        )}
+      </DocumentSection>
     </div>
   );
 };
@@ -212,612 +156,396 @@ const PropertyDocument: React.FC<PropertyDocumentProps> = ({
 export default PropertyDocument;
 
 /* =====================================================
-   REUSABLE UI COMPONENTS
+   DOCUMENT SECTION WRAPPER
    ===================================================== */
 
-const SectionBlock = ({
-  title,
-  required,
-  children,
-}: {
+const DocumentSection: React.FC<{
   title: string;
+  count: number;
   required?: boolean;
+  icon: React.ReactNode;
+  description?: string;
   children: React.ReactNode;
-}) => (
-  <div className="flex flex-col gap-3">
-    <Label className="flex items-center gap-2">
-      <Checkbox disabled />
-      {title} {required && <Required />}
-    </Label>
+}> = ({ title, count, required, icon, description, children }) => (
+  <div className="flex flex-col gap-2.5 bg-white rounded-2xl border border-slate-100 p-5 shadow-xs">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-100">
+          {icon}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <h4 className="text-base font-semibold text-slate-800">{title}</h4>
+          {required && <Required />}
+        </div>
+      </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 gap-4">
-      {children}
+      {count > 0 && (
+        <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full flex items-center gap-1">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+          {count} {count === 1 ? "file" : "files"}
+        </span>
+      )}
     </div>
+
+    {description && (
+      <p className="text-xs text-slate-500 font-normal pl-9">{description}</p>
+    )}
+
+    <div className="mt-2">{children}</div>
   </div>
 );
 
-const ImageCard = ({
-  file,
-  checked,
-  onCheck,
-  onRemove,
+/* =====================================================
+   DRAG-AND-DROP DROPZONE BOX
+   ===================================================== */
 
-}: {
-  file: File | string;
-  checked: boolean;
-  onCheck: () => void;
-  url?: string;
-  onRemove: () => void;
+interface DropzoneBoxProps {
+  accept: string;
+  multiple?: boolean;
+  typeLabel: string;
+  hint: string;
+  icon: React.ReactNode;
+  onFilesSelected: (files: File[]) => void;
+}
+
+const DropzoneBox: React.FC<DropzoneBoxProps> = ({
+  accept,
+  multiple = true,
+  typeLabel,
+  hint,
+  icon,
+  onFilesSelected,
 }) => {
-  const preview =
-    typeof file === "string"
-      ? file
-      : URL.createObjectURL(file);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    // console.log("preview : ", preview, file);
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
 
-    return () => {
-      if (typeof file !== "string") {
-        URL.revokeObjectURL(preview);
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const droppedFiles = Array.from(e.dataTransfer.files).filter(
+        (f) => f instanceof File && f.size > 0,
+      );
+      if (droppedFiles.length > 0) {
+        onFilesSelected(droppedFiles);
       }
-    };
-  }, [file, preview]);
+    }
+  };
 
-  return (
-
-    <div className="relative rounded-[15px] h-[200px] w-[200px] group overflow-hidden">
-      <img
-        src={preview}
-        alt="Property"
-        className="h-full w-full rounded-[15px] object-cover"
-      />
-
-      {/* <Checkbox
-        checked={checked}
-        onChange={onCheck}
-        className="absolute top-3 right-3 bg-white shadow-md border border-gray-300"
-      /> */}
-
-      <button
-        type="button"
-        onClick={onRemove}
-        className="absolute top-3 left-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-lg opacity-0 group-hover:opacity-100 transition-all"
-      >
-        ×
-      </button>
-    </div>
-
-
-    // <div className="relative rounded-[15px] h-[200px] w-[200px]">
-    //   <img
-    //     src={preview}
-    //     alt="Property"
-    //     className="h-full w-full rounded-[15px] object-cover"
-    //   />
-    //   {/* <Checkbox
-    //     checked={checked}
-    //     onChange={() => onCheck()}
-    //     className="absolute top-2 right-2"
-    //   /> */}
-
-    //   <button
-    //     type="button"
-    //     onClick={onRemove}
-    //     className="absolute top-3 left-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-lg opacity-0 group-hover:opacity-100 transition-all"
-    //   >
-    //     ×
-    //   </button>
-    // </div>
-  );
-};
-
-
-const FileCard = ({
-  file,
-  index,
-  onRemove
-}: {
-  file: File | string
-  index?: number;
-  onRemove?: (index: number) => void;
-}) => {
-  console.log(file, "<---- documents files ???")
-  if (typeof file !== "string" && !(file instanceof File)) {
-    return null;
-  }
-  const preview =
-    typeof file === "string"
-      ? file
-      : URL.createObjectURL(file);
-
-  useEffect(() => {
-    console.log("preview : ", preview, file);
-    return () => {
-      if (typeof file !== "string") {
-        URL.revokeObjectURL(preview);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFiles = Array.from(e.target.files).filter(
+        (f) => f instanceof File && f.size > 0,
+      );
+      if (selectedFiles.length > 0) {
+        onFilesSelected(selectedFiles);
       }
-    };
-  }, [file, preview]);
+      e.target.value = "";
+    }
+  };
 
   return (
     <div
-      className="relative rounded-[15px] h-[200px] w-[200px] flex items-center justify-center bg-muted text-sm text-center p-3 group overflow-hidden">
-      {typeof file === "string" ? file : file.name}
-      {onRemove && index !== undefined && (
-        <button
-          type="button"
-          onClick={() => onRemove(index)}
-          className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-lg opacity-0 group-hover:opacity-100 transition-all"
-        >
-          ×
-        </button>
+      onClick={() => fileInputRef.current?.click()}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={cn(
+        "relative w-full rounded-2xl border-2 border-dashed p-6 sm:p-8 transition-all duration-200 cursor-pointer text-center flex flex-col items-center justify-center gap-3 select-none",
+        isDragging
+          ? "border-blue-500 bg-blue-50/70 scale-[1.005] ring-4 ring-blue-500/10 shadow-xs"
+          : "border-slate-200 hover:border-blue-400 bg-slate-50/50 hover:bg-blue-50/20",
       )}
+    >
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={accept}
+        multiple={multiple}
+        className="hidden"
+        onChange={handleInputChange}
+      />
 
+      <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-2xs">
+        {icon}
+      </div>
+
+      <div className="flex flex-col gap-1 items-center">
+        <p className="text-sm text-slate-700">
+          <span className="font-semibold text-blue-600 hover:underline">
+            Click to upload
+          </span>{" "}
+          or drag and drop your {typeLabel}
+        </p>
+        <p className="text-xs text-slate-400 font-normal">{hint}</p>
+      </div>
     </div>
   );
-}
+};
 
-const VideoCard = ({
-  file,
-  index,
-  onRemove,
-}: {
-  file: File | string;
-  index?: number;
-  onRemove?: (index: number) => void;
-}) => {
+/* =====================================================
+   IMAGE PREVIEW CARD
+   ===================================================== */
 
-  if (typeof file !== "string" && !(file instanceof File)) {
-    return null;
-  }
-
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-
-  const videoPreview = React.useMemo(() => {
-    if (typeof file === "string") return file;
-    return URL.createObjectURL(file);
-  }, [file]);
-
+const ImagePreviewCard: React.FC<{
+  item: DocItem;
+  onRemove: () => void;
+}> = ({ item, onRemove }) => {
+  const [imgError, setImgError] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
 
   useEffect(() => {
+    let objectUrl = "";
+    const source = item?.url || item?.data;
 
-    if (videoRef.current) {
-      videoRef.current.load(); // force browser to load blob
+    if (source instanceof File) {
+      try {
+        objectUrl = URL.createObjectURL(source);
+        setPreviewUrl(objectUrl);
+        setImgError(false);
+      } catch (err) {
+        console.error("Error creating image preview URL:", err);
+      }
+    } else if (typeof source === "string" && source.trim() !== "") {
+      setPreviewUrl(source);
+      setImgError(false);
     }
 
     return () => {
-      if (typeof file !== "string") {
-        URL.revokeObjectURL(videoPreview);
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
       }
     };
-
-  }, [videoPreview, file]);
+  }, [item?.data, item?.url]);
 
   return (
-    <div className="relative rounded-[15px] h-[200px] w-[200px] overflow-hidden bg-black group">
-      <video
-        key={index}
-        ref={videoRef}
-        src={videoPreview}
-        controls
-        playsInline
-        preload="metadata"
-        className="h-full w-full object-contain"
-      />
-      {typeof file !== "string" && (
-        <div className="absolute bottom-2 left-2 right-2 bg-black/70 text-white text-xs p-1.5 rounded truncate">
-          {file.name}
-        </div>)}
-      {onRemove && index !== undefined && (
-        <button
-          type="button"
-          onClick={() => onRemove(index)}
-          className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-lg opacity-0 group-hover:opacity-100 transition-all"
-        >
-          ×
-        </button>)}
+    <div className="relative group rounded-xl overflow-hidden border border-slate-200/90 bg-slate-100 aspect-4/3 shadow-2xs hover:shadow-md transition-all">
+      {imgError || !previewUrl ? (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400 p-2 gap-1 text-center">
+          <ImageIcon className="w-6 h-6 text-slate-300" />
+          <span className="text-[11px] text-slate-500 font-medium truncate max-w-[120px]">
+            {item.name || "Image"}
+          </span>
+        </div>
+      ) : (
+        <img
+          src={previewUrl}
+          alt={item.name || "Property image"}
+          onError={() => {
+            console.warn("Failed to load image preview:", previewUrl);
+            setImgError(true);
+          }}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+      )}
+
+      {/* Remove Button */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 hover:bg-red-600 text-white flex items-center justify-center transition-all shadow-xs cursor-pointer z-10"
+        title="Remove image"
+      >
+        <X className="w-4 h-4" />
+      </button>
+
+      {/* File name footer */}
+      {item.name && (
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-2 text-white text-[11px] truncate opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          {item.name}
+        </div>
+      )}
     </div>
-
-    // <div className="relative rounded-[15px] h-[200px] w-[200px] overflow-hidden bg-black group overflow-hidden">
-
-    //   <video
-    //     // key={index}
-    //     ref={videoRef}
-    //     src={videoPreview}
-    //     controls
-    //     playsInline
-    //     preload="metadata"
-    //     className="h-full w-full object-contain"
-    //   />
-    //   {typeof file !== "string" && (
-    //     <div className="absolute bottom-2 left-2 right-2 bg-black/60 text-white text-xs p-1.5 rounded truncate">
-
-    //       {file.name}
-    //       {onRemove && index !== undefined && (
-    //         <button
-    //           type="button"
-    //           onClick={() => onRemove(index)}
-    //           className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-lg opacity-0 group-hover:opacity-100 transition-all"
-    //         >
-    //           ×
-    //         </button>)}
-
-    //     </div>
-    //   )}
-
-    //   {/* {onRemove && index !== undefined && (
-    //     <button
-    //       type="button"
-    //       onClick={() => onRemove(index)}
-    //       className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6"
-    //     >
-    //       x
-    //     </button>
-    //   )} */}
-
-    // </div>
-
   );
-
 };
 
-const ChooseCard = ({
-  command,
-  onClick,
-}: {
-  command: string;
-  onClick: () => void;
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="rounded-[15px] h-[200px] w-[200px] flex flex-col gap-3 items-center justify-center bg-ring/30 hover:bg-ring/40 transition"
-  >
-    <Icon name="UploadImage" />
-    <span className="text-muted-foreground text-center text-md">
-      {command}
-    </span>
-  </button>
-);
+/* =====================================================
+   VIDEO PREVIEW CARD
+   ===================================================== */
 
+const VideoPreviewCard: React.FC<{
+  item: DocItem;
+  onRemove: () => void;
+}> = ({ item, onRemove }) => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [videoSrc, setVideoSrc] = useState<string>("");
 
+  useEffect(() => {
+    let objectUrl = "";
+    const source = item?.url || item?.data;
 
-// import React, { useEffect, useRef, useMemo } from "react";
-// import { Label } from "../../ui/label";
-// import { Required } from "../../ui/miscellenious";
-// import { Checkbox } from "../../ui/checkbox";
-// import Icon from "../../icons/icon";
-// import { DocumentsPayload } from "@/src/types/property";
+    if (source instanceof File) {
+      try {
+        objectUrl = URL.createObjectURL(source);
+        setVideoSrc(objectUrl);
+      } catch (err) {
+        console.error("Error creating video object URL:", err);
+      }
+    } else if (typeof source === "string" && source.trim() !== "") {
+      setVideoSrc(source);
+    }
 
-// type PropertyDocumentProps = {
-//   documents: DocumentsPayload;
-//   setDocuments: React.Dispatch<React.SetStateAction<DocumentsPayload>>;
-// };
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [item?.data, item?.url]);
 
-// const PropertyDocument: React.FC<PropertyDocumentProps> = ({
-//   documents,
-//   setDocuments,
-// }) => {
-//   const imageInput = useRef<HTMLInputElement>(null);
-//   const videoInput = useRef<HTMLInputElement>(null);
-//   const floorInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (videoRef.current && videoSrc) {
+      videoRef.current.load();
+    }
+  }, [videoSrc]);
 
-//   /* ----------------------- ADD FILES ----------------------- */
-//   const handleAddFiles = (
-//     e: React.ChangeEvent<HTMLInputElement>,
-//     type: keyof DocumentsPayload
-//   ) => {
-//     if (!e.target.files?.length) return;
+  return (
+    <div className="relative group rounded-xl overflow-hidden bg-slate-900 border border-slate-200 aspect-16/9 shadow-2xs">
+      {videoSrc ? (
+        <video
+          ref={videoRef}
+          src={videoSrc}
+          controls
+          playsInline
+          preload="metadata"
+          className="w-full h-full object-contain"
+        />
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-2">
+          <Film className="w-8 h-8 text-slate-500" />
+          <span className="text-xs">Loading video...</span>
+        </div>
+      )}
 
-//     const newFiles = Array.from(e.target.files)
-//       .filter((file) => file instanceof File && file.size > 0)
-//       .map((file) => ({
-//         data: file,
-//         ...(type === "images" && { is_featured: false }),
-//       }));
+      {/* Remove button */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 hover:bg-red-600 text-white flex items-center justify-center transition-all shadow-xs cursor-pointer z-10"
+        title="Remove video"
+      >
+        <X className="w-4 h-4" />
+      </button>
 
-//     if (!newFiles.length) return;
+      {/* File name bar */}
+      <div className="absolute bottom-0 inset-x-0 bg-black/70 text-white text-xs px-2.5 py-1 truncate pointer-events-none">
+        {item.name ||
+          (item.data instanceof File ? item.data.name : "Property Video")}
+      </div>
+    </div>
+  );
+};
 
-//     setDocuments((prev) => ({
-//       ...prev,
-//       [type]: [...(prev[type] || []), ...newFiles],
-//     }));
+/* =====================================================
+   FILE / FLOOR PLAN PREVIEW CARD
+   ===================================================== */
 
-//     e.target.value = "";
-//   };
+const FilePreviewCard: React.FC<{
+  item: DocItem;
+  onRemove: () => void;
+}> = ({ item, onRemove }) => {
+  const [imgError, setImgError] = useState(false);
+  const [preview, setPreview] = useState<string>("");
 
-//   const setFeaturedImage = (index: number) => {
-//     setDocuments((prev) => ({
-//       ...prev,
-//       images: prev.images.map((img, i) => ({
-//         ...img,
-//         is_featured: i === index,
-//       })),
-//     }));
-//   };
+  useEffect(() => {
+    let objectUrl = "";
+    const source = item?.url || item?.data;
 
-//   const removeFile = (type: keyof DocumentsPayload, index: number) => {
-//     setDocuments((prev) => ({
-//       ...prev,
-//       [type]: prev[type].filter((_, i) => i !== index),
-//     }));
-//   };
+    if (source instanceof File) {
+      try {
+        objectUrl = URL.createObjectURL(source);
+        setPreview(objectUrl);
+        setImgError(false);
+      } catch (err) {
+        console.error("Error creating floor plan object URL:", err);
+      }
+    } else if (typeof source === "string" && source.trim() !== "") {
+      setPreview(source);
+      setImgError(false);
+    }
 
-//   return (
-//     <div className="flex flex-col min-h-[50dvh] 2xl:min-h-[80dvh] gap-9">
-//       {/* ===================== IMAGES ===================== */}
-//       <SectionBlock title="Images" required>
-//         <input
-//           ref={imageInput}
-//           type="file"
-//           accept="image/*"
-//           multiple
-//           hidden
-//           onChange={(e) => handleAddFiles(e, "images")}
-//         />
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [item?.data, item?.url]);
 
-//         <ChooseCard
-//           command="Drag or upload your property images"
-//           onClick={() => imageInput.current?.click()}
-//         />
+  const displayName =
+    item.name ||
+    (item.data instanceof File ? item.data.name : "Floor Plan");
 
-//         {documents.images.map((item, index) => (
-//           <ImageCard
-//             key={item.url || `new-${index}`}
-//             item={item as any}
-//             checked={!!item.is_featured}
-//             onCheck={() => setFeaturedImage(index)}
-//             onRemove={() => removeFile("images", index)}
-//           />
-//         ))}
-//       </SectionBlock>
+  const isPdf =
+    displayName.toLowerCase().endsWith(".pdf") ||
+    (typeof item.url === "string" && item.url.toLowerCase().endsWith(".pdf")) ||
+    (item.data instanceof File && item.data.type === "application/pdf");
 
-//       {/* ===================== VIDEOS ===================== */}
-//       <SectionBlock title="Video">
-//         <input
-//           ref={videoInput}
-//           type="file"
-//           accept="video/*"
-//           multiple
-//           hidden
-//           onChange={(e) => handleAddFiles(e, "videos")}
-//         />
+  return (
+    <div className="relative group rounded-xl overflow-hidden border border-slate-200/90 bg-white aspect-4/3 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center p-2 text-center">
+      {isPdf || imgError || !preview ? (
+        <div className="flex flex-col items-center justify-center gap-1.5 p-2">
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <FileText className="w-5 h-5" />
+          </div>
+          <span
+            className="text-[11px] font-medium text-slate-700 truncate max-w-[130px]"
+            title={displayName}
+          >
+            {displayName}
+          </span>
+          {item.data instanceof File && (
+            <span className="text-[10px] text-slate-400">
+              {(item.data.size / 1024).toFixed(0)} KB
+            </span>
+          )}
+        </div>
+      ) : (
+        <img
+          src={preview}
+          alt={displayName}
+          onError={() => setImgError(true)}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+      )}
 
-//         <ChooseCard
-//           command="Drag or upload your property video"
-//           onClick={() => videoInput.current?.click()}
-//         />
+      {/* Remove Button */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 hover:bg-red-600 text-white flex items-center justify-center transition-all shadow-xs cursor-pointer z-10"
+        title="Remove file"
+      >
+        <X className="w-4 h-4" />
+      </button>
 
-//         {documents.videos.map((item, index) => (
-//           <VideoCard
-//             key={item.url || `new-video-${index}`}
-//             item={item as any}
-//             onRemove={() => removeFile("videos", index)}
-//           />
-//         ))}
-//       </SectionBlock>
-
-//       {/* ===================== FLOOR PLAN ===================== */}
-//       <SectionBlock title="Floor Plan">
-//         <input
-//           ref={floorInput}
-//           type="file"
-//           accept="image/*"
-//           multiple
-//           hidden
-//           onChange={(e) => handleAddFiles(e, "floor_plans")}
-//         />
-
-//         <ChooseCard
-//           command="Drag or upload your property floor plan"
-//           onClick={() => floorInput.current?.click()}
-//         />
-
-//         {documents.floor_plans.map((item, index) => (
-//           <FileCard
-//             key={item.url || `new-floor-${index}`}
-//             item={item as any}
-//             onRemove={() => removeFile("floor_plans", index)}
-//           />
-//         ))}
-//       </SectionBlock>
-//     </div>
-//   );
-// };
-
-// export default PropertyDocument;
-
-// /* =====================================================
-//    REUSABLE COMPONENTS
-//    ===================================================== */
-
-// const SectionBlock = ({
-//   title,
-//   required,
-//   children,
-// }: {
-//   title: string;
-//   required?: boolean;
-//   children: React.ReactNode;
-// }) => (
-//   <div className="flex flex-col gap-3">
-//     <Label className="flex items-center gap-2">
-//       <Checkbox disabled />
-//       {title} {required && <Required />}
-//     </Label>
-//     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 gap-4">
-//       {children}
-//     </div>
-//   </div>
-// );
-
-// /* ----------------------- IMAGE CARD (Works in both Add & Edit) ----------------------- */
-// const ImageCard = ({
-//   item,
-//   checked,
-//   onCheck,
-//   onRemove,
-// }: {
-//   item: { data?: File; url?: string; is_featured?: boolean };
-//   checked: boolean;
-//   onCheck: () => void;
-//   onRemove: () => void;
-// }) => {
-//   const preview = useMemo(() => {
-//     if (item.url) return item.url;                    // Edit mode - existing image
-//     if (item.data instanceof File) return URL.createObjectURL(item.data); // Add mode - new upload
-//     return "";
-//   }, [item.url, item.data]);
-
-//   useEffect(() => {
-//     return () => {
-//       if (item.data instanceof File && !item.url) {
-//         URL.revokeObjectURL(preview);
-//       }
-//     };
-//   }, [preview, item.data, item.url]);
-
-//   if (!preview) return null;
-
-//   return (
-//     <div className="relative rounded-[15px] h-[200px] w-[200px] group overflow-hidden">
-//       <img
-//         src={preview}
-//         alt="Property"
-//         className="h-full w-full rounded-[15px] object-cover"
-//       />
-
-//       <Checkbox
-//         checked={checked}
-//         onChange={onCheck}
-//         className="absolute top-3 right-3 bg-white shadow-md border border-gray-300"
-//       />
-
-//       <button
-//         type="button"
-//         onClick={onRemove}
-//         className="absolute top-3 left-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-lg opacity-0 group-hover:opacity-100 transition-all"
-//       >
-//         ×
-//       </button>
-//     </div>
-//   );
-// };
-
-// /* ----------------------- FILE CARD ----------------------- */
-// const FileCard = ({
-//   item,
-//   onRemove,
-// }: {
-//   item: { data?: File; url?: string; name?: string };
-//   onRemove: () => void;
-// }) => {
-//   const displayName = item.name || (item.data instanceof File ? item.data.name : "Floor Plan");
-
-//   const previewUrl = useMemo(() => {
-//     if (item.url) return item.url;
-//     if (item.data instanceof File) return URL.createObjectURL(item.data);
-//     return "";
-//   }, [item.url, item.data]);
-
-//   useEffect(() => {
-//     return () => {
-//       if (item.data instanceof File && !item.url) {
-//         URL.revokeObjectURL(previewUrl);
-//       }
-//     };
-//   }, [previewUrl]);
-
-//   return (
-//     <div className="relative rounded-[15px] h-[200px] w-[200px] flex flex-col items-center justify-center bg-muted text-sm text-center p-3 group">
-//       <div className="text-center">
-//         <p className="font-medium truncate">{displayName}</p>
-//         {item.data instanceof File && (
-//           <p className="text-xs text-muted-foreground mt-1">
-//             {(item.data.size / 1024).toFixed(1)} KB
-//           </p>
-//         )}
-//       </div>
-
-//       <button
-//         type="button"
-//         onClick={onRemove}
-//         className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-lg opacity-0 group-hover:opacity-100 transition-all"
-//       >
-//         ×
-//       </button>
-//     </div>
-//   );
-// };
-
-// /* ----------------------- VIDEO CARD ----------------------- */
-// const VideoCard = ({
-//   item,
-//   onRemove,
-// }: {
-//   item: { data?: File; url?: string };
-//   onRemove: () => void;
-// }) => {
-//   const videoRef = useRef<HTMLVideoElement>(null);
-
-//   const videoSrc = useMemo(() => {
-//     if (item.url) return item.url;
-//     if (item.data instanceof File) return URL.createObjectURL(item.data);
-//     return "";
-//   }, [item.url, item.data]);
-
-//   useEffect(() => {
-//     return () => {
-//       if (item.data instanceof File && !item.url) {
-//         URL.revokeObjectURL(videoSrc);
-//       }
-//     };
-//   }, [videoSrc]);
-
-//   if (!videoSrc) return null;
-
-//   return (
-//     <div className="relative rounded-[15px] h-[200px] w-[200px] overflow-hidden bg-black group">
-//       <video
-//         ref={videoRef}
-//         src={videoSrc}
-//         controls
-//         playsInline
-//         preload="metadata"
-//         className="h-full w-full object-contain"
-//       />
-
-//       <div className="absolute bottom-2 left-2 right-2 bg-black/70 text-white text-xs p-1.5 rounded truncate">
-//         {item.data instanceof File ? item.data.name : "Video"}
-//       </div>
-
-//       <button
-//         type="button"
-//         onClick={onRemove}
-//         className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-lg opacity-0 group-hover:opacity-100 transition-all"
-//       >
-//         ×
-//       </button>
-//     </div>
-//   );
-// };
-
-// const ChooseCard = ({
-//   command,
-//   onClick,
-// }: {
-//   command: string;
-//   onClick: () => void;
-// }) => (
-//   <button
-//     type="button"
-//     onClick={onClick}
-//     className="rounded-[15px] h-[200px] w-[200px] flex flex-col gap-3 items-center justify-center bg-ring/30 hover:bg-ring/40 transition"
-//   >
-//     <Icon name="UploadImage" />
-//     <span className="text-muted-foreground text-center text-md">
-//       {command}
-//     </span>
-//   </button>
-// );
+      {/* Footer name if image */}
+      {!isPdf && !imgError && preview && (
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-2 text-white text-[10px] truncate opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          {displayName}
+        </div>
+      )}
+    </div>
+  );
+};

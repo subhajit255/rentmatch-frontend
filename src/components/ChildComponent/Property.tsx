@@ -1,8 +1,5 @@
 import React from "react";
-import {
-  BookmarkIcon,
-  MapPinIcon,
-} from "lucide-react";
+import { BookmarkIcon, MapPinIcon } from "lucide-react";
 // import { Badge } from "./ui/badge";
 import { Badge } from "./../ui/badge";
 import { Button } from "./../ui/button";
@@ -38,7 +35,10 @@ const Property: React.FC<PropertyProps> = ({
   price,
 }) => {
   return (
-    <Card key={id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-card-border">
+    <Card
+      key={id}
+      className="bg-white rounded-2xl overflow-hidden shadow-sm border border-card-border"
+    >
       <div className="relative">
         <div
           className="w-full h-[270px] bg-cover bg-center relative"
@@ -76,43 +76,48 @@ const Property: React.FC<PropertyProps> = ({
         </div>
       </div>
 
-      <CardContent className="p-5">
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2.5">
-            <h3 title={title} className="font-sansline-clamp-1 font-semibold text-foreground text-xl tracking-[0] leading-7">
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-2">
+            <h3
+              title={title}
+              className="font-sans line-clamp-1 font-semibold text-foreground text-lg sm:text-xl tracking-[0] leading-tight"
+            >
               {title}
             </h3>
 
-            <div className="flex flex-wrap items-start gap-2 md:gap-4">
-              <div className="flex items-center gap-1">
-                {/* <BedIcon className="w-4 h-4" /> */}
-                <img src={IMAGES.beds} alt="" />
-                <span className="font-sans font-normal text-muted-foreground text-xs md:text-sm tracking-[0] leading-[19.6px]">
-                  Beds:
-                </span>
-                <span className="font-sans font-semibold text-primary-foreground text-xs md:text-sm tracking-[0] leading-[19.6px]">
-                  {beds}
-                </span>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 shrink-0">
+                  {/* <BedIcon className="w-4 h-4" /> */}
+                  <img src={IMAGES.beds} alt="" className="w-3.5 h-3.5 object-contain" />
+                  <span className="font-sans font-normal text-muted-foreground text-xs tracking-[0]">
+                    Beds:
+                  </span>
+                  <span className="font-sans font-semibold text-primary-foreground text-xs tracking-[0]">
+                    {beds}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  {/* <BathIcon className="w-4 h-4" /> */}
+                  <img src={IMAGES.baths} alt="" className="w-3.5 h-3.5 object-contain" />
+                  <span className="font-sans font-normal text-muted-foreground text-xs tracking-[0]">
+                    Baths:
+                  </span>
+                  <span className="font-sans font-semibold text-primary-foreground text-xs tracking-[0]">
+                    {baths}
+                  </span>
+                </div>
               </div>
 
-              <div className="flex items-center gap-1">
-                {/* <BathIcon className="w-4 h-4" /> */}
-                <img src={IMAGES.baths} alt="" />
-                <span className="font-sans font-normal text-muted-foreground text-xs md:text-sm tracking-[0] leading-[19.6px]">
-                  Baths:
-                </span>
-                <span className="font-sans font-semibold text-primary-foreground text-xs md:text-sm tracking-[0] leading-[19.6px]">
-                  {baths}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
                 {/* <SquareIcon className="w-4 h-4" /> */}
-                <img src={IMAGES.sqm} alt="" />
-                <span className="font-sans font-normal text-muted-foreground text-xs md:text-sm tracking-[0] leading-[19.6px]">
-                  sqm:
+                <img src={IMAGES.sqm} alt="" className="w-3.5 h-3.5 object-contain" />
+                <span className="font-sans font-normal text-muted-foreground text-xs tracking-[0]">
+                  Area:
                 </span>
-                <span className="font-sans font-semibold text-primary-foreground text-xs md:text-sm tracking-[0] leading-[19.6px]">
+                <span className="font-sans font-semibold text-primary-foreground text-xs tracking-[0]">
                   {sqm}
                 </span>
               </div>
@@ -125,15 +130,15 @@ const Property: React.FC<PropertyProps> = ({
             <div className="flex items-center gap-2 flex-1">
               <span className="font-sans font-normal text-primary-foreground text-xs md:text-sm tracking-[0] leading-[19.6px]">
                 <span className="font-medium">Posted On: </span>
-                <span className="font-bold">{
-                  postedDate instanceof Date
-                    ?
-                postedDate.toLocaleDateString()
-                : "N/A"}</span>
+                <span className="font-bold">
+                  {postedDate instanceof Date
+                    ? postedDate.toLocaleDateString()
+                    : "N/A"}
+                </span>
               </span>
             </div>
-            <div className="font-sans font-bold text-primary text-lg md:text-xl tracking-[0] leading-7">
-             <span>$</span> {price}
+            <div className="font-sans font-bold text-primary text-base md:text-lg tracking-[0] leading-7 shrink-0 whitespace-nowrap">
+              <span>$</span> {price}{String(price).toLowerCase().includes("week") || String(price).toLowerCase().includes("month") ? "" : " / week"}
             </div>
           </div>
         </div>

@@ -1,54 +1,125 @@
 import React, { useMemo, useState } from "react";
 import { Button } from "../ui/button";
-import Icon from "../icons/icon";
 import PostCard from "./postCard";
 import { Slider } from "../ui/slider";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { balcony, bathrooms, bedrooms, garages } from "../../constants/property";
+import { bathrooms, bedrooms, garages } from "../../constants/property";
 import { getAllPost } from "../../actions/myPost";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
 import { advanceSearch } from "@/src/types/property";
 import { IMAGES } from "../../assets/index";
-import { SearchX } from "lucide-react";
 import { Input } from "../ui/input";
+import { Lock, Play } from "lucide-react";
 
+const DEMO_TENANT_POSTS = [
+    {
+        _id: "demo-1",
+        created_by: {
+            user_name: "RM-4812",
+            first_name: "Renter",
+            last_name: "RM-4812",
+            gender: "Male"
+        },
+        subject: "Looking for bright modern apartment",
+        location: "Newtown and Inner West",
+        rentalCityPreference: "Newtown and Inner West",
+        rentalStatePreference: "NSW",
+        move_in_requirements: "2026-11-28",
+        start_price: 600,
+        end_price: 700,
+        match_percentage: 92,
+        is_wishlisted: false,
+        pets: "no"
+    },
+    {
+        _id: "demo-2",
+        created_by: {
+            user_name: "RM-1940",
+            first_name: "Renter",
+            last_name: "RM-1940",
+            gender: "Female"
+        },
+        subject: "Courtyard home with quiet surroundings",
+        location: "Marrickville",
+        rentalCityPreference: "Marrickville",
+        rentalStatePreference: "NSW",
+        move_in_requirements: "2026-11-20",
+        start_price: 650,
+        end_price: 720,
+        match_percentage: 88,
+        is_wishlisted: false,
+        pets: "dog"
+    },
+    {
+        _id: "demo-3",
+        created_by: {
+            user_name: "RM-6027",
+            first_name: "Renter",
+            last_name: "RM-6027",
+            gender: "Male"
+        },
+        subject: "Spacious unit near public transport",
+        location: "Inner West, within 10 km",
+        rentalCityPreference: "Inner West, within 10 km",
+        rentalStatePreference: "NSW",
+        move_in_requirements: "2026-12-01",
+        start_price: 680,
+        end_price: 780,
+        match_percentage: 94,
+        is_wishlisted: false,
+        pets: "no"
+    }
+];
+
+const ACCESSIBILITY_OPTIONS = [
+    { id: "any", title: "Any", value: "any" },
+    { id: "step_free", title: "Step-free entry", value: "step_free" },
+    { id: "ground_floor", title: "Ground floor living", value: "ground_floor" },
+    { id: "wide_doors", title: "Wide doorways", value: "wide_doors" },
+    { id: "accessible_bath", title: "Accessible bathroom", value: "accessible_bath" },
+];
 
 const FindTenants = () => {
-    const { user } = useAuth()
-    const [params, setParams] = useState<advanceSearch>({
+    const { user } = useAuth();
+    const [params, setParams] = useState<advanceSearch & { accessibility?: string }>({
         start_price: "0",
-        end_price: "0",
-        // start_size: "0",
-        // end_size: "0",
+        end_price: "2000",
         garages: "",
         bathrooms: "",
         bedrooms: "",
         balcony: "",
         rentalCityPreference: "",
         rentalStatePreference: "",
+        accessibility: "",
     });
+
     const [appliedParams, setAppliedParams] = useState<advanceSearch | null>(null);
     const [page, setPage] = useState<number>(1);
     const [limit, setLimit] = useState<number>(100);
-    // getAllPost
 
-    const { data, isLoading, refetch } = useQuery({
+    const { data, isLoading, isError, refetch } = useQuery({
         queryKey: ['all_post', page, limit, appliedParams],
         queryFn: () => getAllPost(page, limit, appliedParams),
         staleTime: 5 * 60 * 1000,
         refetchOnWindowFocus: false,
-        // enabled: false
     });
 
     const postData: any[] = useMemo(() => {
-        return isLoading ? [] : data?.result ?? [];
-    }, [data])
+        if (isLoading) return [];
+        if (Array.isArray(data?.result) && data.result.length > 0) {
+            return data.result;
+        }
+        if (isError || (data?.result && data.result.length === 0 && !appliedParams)) {
+            return DEMO_TENANT_POSTS;
+        }
+        return data?.result ?? [];
+    }, [data, isLoading, isError, appliedParams]);
 
     const handleSelectChange = (field: string, value: string) => {
         setParams(prev => ({ ...prev, [field]: value }));
-    }
+    };
 
     const handleRangeChange = (field: string, value: number | number[]) => {
         if (Array.isArray(value)) {
@@ -56,215 +127,194 @@ const FindTenants = () => {
         } else {
             setParams(prev => ({ ...prev, [field]: value.toString() }));
         }
-    }
+    };
 
     const handleSearch = () => {
         const filteredParams = Object.fromEntries(
-            Object.entries(params).filter(([_, value]) => value !== "" && value !== null && value !== undefined)
+            Object.entries(params).filter(([_, value]) => value !== "" && value !== null && value !== undefined && value !== "any")
         );
-
-        console.log(filteredParams, "<-- cleaned search params");
         setAppliedParams(filteredParams);
         setPage(1);
         refetch();
+    };
 
-    }
-
-    // empty state is rendered inside the results column so the filter panel stays usable
-    const emptyState = <div className="col-span-full flex justify-center items-center mt-10">
-        <div className="flex justify-center items-center flex-col">
+    const emptyState = (
+        <div className="flex flex-col justify-center items-center py-16 bg-white rounded-2xl border border-slate-100 p-8 shadow-xs text-center">
             <img
                 src={IMAGES.error}
                 alt="No Properties"
-                className="mb-4 w-[50%]"
+                className="mb-4 w-40 opacity-80"
             />
-            <div className="text-2xl">
-                <div className="relative mb-6">
-                    <div className="absolute inset-0 animate-ping rounded-full bg-primary opacity-20"></div>
-                    {/* <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-primary/10"> */}
-                    {/* <SearchX size={20} className="text-primary" strokeWidth={1.5} /> */}
-                    As of now, no post are availabe !
-                    {/* </div> */}
-                </div>
-            </div>
+            <h4 className="text-lg font-bold text-slate-800">No tenant requests found</h4>
+            <p className="text-sm text-slate-500 mt-1 max-w-sm">
+                Try broadening your budget or search criteria to see more prospective renters.
+            </p>
         </div>
-    </div>
+    );
 
-    return <div className="py-4">
-        <div className="w-full grid grid-cols-1 lg:grid-cols-7 gap-5">
-            <div className="lg:col-span-5">
-                <div className="rounded-lg w-full bg-white ">
-                    <div className="grid lg:h-[67dvh] overflow-y-auto thin-scrollbar  grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 px-4 py-4">
-                        {
-                            isLoading ?
-                                <div className="col-span-full flex justify-center items-center py-10 text-muted-foreground">Loading...</div>
-                                : postData && postData.length > 0 ?
-                                    postData?.map((postDetails, index) =>
-                                        <PostCard key={index} postDetails={postDetails} isGuest={user?.role === "GUEST"} />
-                                    ) : emptyState
-                        }
+    return (
+        <div className="py-4 max-w-[1500px] mx-auto">
+            <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* Left Column: Privacy Banner + Stacked Tenant Cards */}
+                <div className="lg:col-span-8 flex flex-col">
+                    {/* Privacy notice banner matching mockup */}
+                    <div className="w-full bg-[#EBF3FE] border border-[#BFDBFE]/60 rounded-2xl py-3 px-5 flex items-center gap-2.5 text-xs sm:text-sm font-semibold text-[#1E40AF] mb-5 shadow-2xs">
+                        <Lock className="w-4 h-4 text-[#1E40AF] shrink-0" />
+                        <span>Contact details stay private until the renter accepts your invitation.</span>
+                    </div>
+
+                    {/* Cards List matching mockup */}
+                    <div className="flex flex-col gap-4 max-h-[calc(100vh-210px)] overflow-y-auto thin-scrollbar pr-2 pb-6">
+                        {isLoading ? (
+                            <div className="flex justify-center items-center py-16 text-slate-400 font-medium">
+                                Loading tenants...
+                            </div>
+                        ) : postData && postData.length > 0 ? (
+                            postData.map((postDetails, index) => (
+                                <PostCard
+                                    key={postDetails._id || index}
+                                    postDetails={postDetails}
+                                    isGuest={user?.role === "GUEST"}
+                                    index={index}
+                                />
+                            ))
+                        ) : (
+                            emptyState
+                        )}
                     </div>
                 </div>
-            </div>
-            <div className="flex flex-col justify-between w-full lg:col-span-2">
-                <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-3">
-                        <Icon name="Play" color="var(--muted-foreground)" fill="var(--muted-foreground)" />
-                        <h3 className="text-lg/[1.5] font-bold text-warning">Advance Search</h3>
-                    </div>
-                    <div className="h-[50dvh] overflow-y-auto thin-scrollbar  pr-3 py-2">
-                        <div className="grid grid-cols-1 gap-5 ">
-                            <div className="w-full">
-                                <div className="flex flex-col gap-2">
-                                    <Label >Price: ${params?.start_price} - ${params?.end_price}</Label>
-                                    <Slider
-                                        value={[params?.start_price, params?.end_price].map(Number)}
-                                        onValueChange={val => handleRangeChange("price", val)}
-                                        // onValueChange={val => setMyPostPayload(prev => ({ ...prev, start_price: val[0].toString(), end_price: val[1].toString() }))}
-                                        min={100}
-                                        max={100000}
-                                        step={1}
-                                    />
-                                </div>
-                            </div>
-                            {/* <div className="w-full">
-                                <div className="flex flex-col gap-2">
-                                    <Label >Size: {params?.start_size} sqm - {params?.end_size} sqm</Label>
-                                    <Slider
-                                        value={[params?.start_size, params?.end_size].map(Number)}
-                                        onValueChange={val => handleRangeChange("size", val)}
-                                        // onValueChange={val => setMyPostPayload(prev => ({ ...prev, start_size: val[0].toString(), end_size: val[1].toString() }))}
-                                        min={0}
-                                        max={20000}
-                                        step={1}
-                                    />
-                                </div>
-                            </div> */}
 
-                            <div className="w-full">
-                                <div className="flex flex-col gap-2.5 ">
-                                    <Label >Garages </Label>
-                                    <Select
-                                        onValueChange={(val) => handleSelectChange("garages", val)}
-                                        value={params?.garages}
-                                    >
-                                        <SelectTrigger className="w-full h-12 py-0 rounded-md bg-white border-border-input bg-background shadow-none ">
-                                            <SelectValue placeholder="Select Your Garages" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {
-                                                garages?.map(garage =>
-                                                    <SelectItem key={garage?.id} value={garage?.value}>{garage?.title}</SelectItem>
-                                                )
-                                            }
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            <div className="w-full">
-                                <div className="flex flex-col gap-2.5 ">
-                                    <Label >Bathrooms </Label>
-                                    <Select
-                                        onValueChange={(val) => handleSelectChange("bathrooms", val)}
-                                        value={params?.bathrooms}
-                                    >
-                                        <SelectTrigger className="w-full h-12 py-0 rounded-md bg-white border-border-input bg-background shadow-none ">
-                                            <SelectValue placeholder="Select Your Bathrooms" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {
-                                                bathrooms?.map(bathroom =>
-                                                    <SelectItem key={bathroom?.id} value={bathroom?.value}>{bathroom?.title}</SelectItem>
-                                                )
-                                            }
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                {/* {errors?.bathrooms && <FormError message={errors?.bathrooms} />} */}
-                            </div>
-                            <div className="w-full">
-                                <div className="flex flex-col gap-2.5 ">
-                                    <Label >Bedrooms </Label>
-                                    <Select
-                                        onValueChange={(val) => handleSelectChange("bedrooms", val)}
-                                        value={params?.bedrooms}
-                                    >
-                                        <SelectTrigger className="w-full h-12 py-0 rounded-md bg-white border-border-input bg-background shadow-none ">
-                                            <SelectValue placeholder="Select Your Bedrooms" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {
-                                                bedrooms?.map(bedroom =>
-                                                    <SelectItem key={bedroom?.id} value={bedroom?.value}>{bedroom?.title}</SelectItem>
-                                                )
-                                            }
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            {/* <div className="w-full">
-                                <div className="flex flex-col gap-2.5">
-                                    <Label >Balcony</Label>
-                                    <Select
-                                        onValueChange={(val) => handleSelectChange("balcony", val)}
-                                        value={params?.balcony}
-                                    >
-                                        <SelectTrigger className="w-full h-12 py-0 rounded-md bg-white border-border-input bg-background shadow-none ">
-                                            <SelectValue placeholder="Select Your Balcony" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {
-                                                balcony?.map(balconyItem =>
-                                                    <SelectItem key={balconyItem?.id} value={balconyItem?.value}>{balconyItem?.title}</SelectItem>
-                                                )
-                                            }
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div> */}
-
-
-
-                            <div className="w-full">
-                                <div className="flex flex-col gap-2.5">
-                                    <Label htmlFor="rentalStatePreference">Suburb Zones</Label>
-                                    <Input
-                                        id="rentalStatePreference"
-                                        type="text"
-                                        placeholder="Enter Suburb Zones Preference"
-                                        className="w-full h-12 py-0 rounded-md bg-white border-border-input bg-background shadow-none"
-                                        value={params?.rentalStatePreference || ""}
-                                        onChange={(e) => handleSelectChange("rentalStatePreference", e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            <div className="w-full">
-                                <div className="flex flex-col gap-2.5">
-                                    <Label htmlFor="rentalCityPreference">Suburb</Label>
-                                    <Input
-                                        id="rentalCityPreference"
-                                        type="text"
-                                        placeholder="Enter Suburb Preference"
-                                        className="w-full h-12 py-0 rounded-md bg-white border-border-input bg-background shadow-none"
-                                        value={params?.rentalCityPreference || ""}
-                                        onChange={(e) => handleSelectChange("rentalCityPreference", e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
+                {/* Right Column: Advance Search Panel */}
+                <div className="lg:col-span-4 sticky top-4">
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_14px_rgba(0,0,0,0.03)] p-6 flex flex-col gap-5">
+                        {/* Title matching mockup */}
+                        <div className="flex items-center gap-2 pb-1">
+                            <Play className="w-4 h-4 fill-[#EA580C] text-[#EA580C]" />
+                            <h3 className="text-lg font-bold text-[#EA580C] tracking-tight">Advance Search</h3>
                         </div>
 
+                        {/* Rent Slider */}
+                        <div className="flex flex-col gap-2">
+                            <Label className="text-xs font-semibold text-slate-700">
+                                Weekly rent: ${Number(params?.start_price || 0).toLocaleString()} to ${Number(params?.end_price || 2000).toLocaleString()}
+                            </Label>
+                            <Slider
+                                value={[Number(params?.start_price || 0), Number(params?.end_price || 2000)]}
+                                onValueChange={val => handleRangeChange("price", val)}
+                                min={0}
+                                max={10000}
+                                step={50}
+                                className="py-2"
+                            />
+                        </div>
+
+                        {/* Garages */}
+                        <div className="flex flex-col gap-1.5">
+                            <Label className="text-xs font-semibold text-slate-700">Garages</Label>
+                            <Select
+                                onValueChange={(val) => handleSelectChange("garages", val)}
+                                value={params?.garages}
+                            >
+                                <SelectTrigger className="w-full h-11 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs shadow-none hover:border-slate-300 transition-colors">
+                                    <SelectValue placeholder="Select your garages" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {garages?.map(garage => (
+                                        <SelectItem key={garage?.id} value={garage?.value}>
+                                            {garage?.title}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Bathrooms */}
+                        <div className="flex flex-col gap-1.5">
+                            <Label className="text-xs font-semibold text-slate-700">Bathrooms</Label>
+                            <Select
+                                onValueChange={(val) => handleSelectChange("bathrooms", val)}
+                                value={params?.bathrooms}
+                            >
+                                <SelectTrigger className="w-full h-11 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs shadow-none hover:border-slate-300 transition-colors">
+                                    <SelectValue placeholder="Select your bathrooms" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {bathrooms?.map(bathroom => (
+                                        <SelectItem key={bathroom?.id} value={bathroom?.value}>
+                                            {bathroom?.title}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Bedrooms */}
+                        <div className="flex flex-col gap-1.5">
+                            <Label className="text-xs font-semibold text-slate-700">Bedrooms</Label>
+                            <Select
+                                onValueChange={(val) => handleSelectChange("bedrooms", val)}
+                                value={params?.bedrooms}
+                            >
+                                <SelectTrigger className="w-full h-11 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs shadow-none hover:border-slate-300 transition-colors">
+                                    <SelectValue placeholder="Select your bedrooms" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {bedrooms?.map(bedroom => (
+                                        <SelectItem key={bedroom?.id} value={bedroom?.value}>
+                                            {bedroom?.title}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Accessibility needs it can meet */}
+                        <div className="flex flex-col gap-1.5">
+                            <Label className="text-xs font-semibold text-slate-700">Accessibility needs it can meet</Label>
+                            <Select
+                                onValueChange={(val) => handleSelectChange("accessibility", val)}
+                                value={params?.accessibility}
+                            >
+                                <SelectTrigger className="w-full h-11 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs shadow-none hover:border-slate-300 transition-colors">
+                                    <SelectValue placeholder="Select accessibility features" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ACCESSIBILITY_OPTIONS.map(opt => (
+                                        <SelectItem key={opt.id} value={opt.value}>
+                                            {opt.title}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Suburb zones */}
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="suburbZones" className="text-xs font-semibold text-slate-700">Suburb zones</Label>
+                            <Input
+                                id="suburbZones"
+                                type="text"
+                                placeholder="Enter suburb zone preference"
+                                className="w-full h-11 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs shadow-none placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-[#1E3A8A]"
+                                value={params?.rentalCityPreference || ""}
+                                onChange={(e) => handleSelectChange("rentalCityPreference", e.target.value)}
+                            />
+                        </div>
+
+                        {/* Find Tenant action button */}
+                        <div className="w-full flex justify-center pt-2">
+                            <Button
+                                onClick={handleSearch}
+                                className="rounded-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 text-white font-semibold px-12 py-2.5 h-11 text-sm shadow-sm transition-all cursor-pointer"
+                            >
+                                Find Tenant
+                            </Button>
+                        </div>
                     </div>
                 </div>
-                {<div className="w-full flex justify-center">
-                    <Button onClick={handleSearch} className="rounded-full">Find Tenant</Button>
-                </div>}
             </div>
         </div>
-
-    </div>
-}
+    );
+};
 
 export default FindTenants;

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   GoogleMap,
   LoadScript,
@@ -43,47 +43,63 @@ interface Props {
   center: google.maps.LatLngLiteral;
   zoom: number;
   userLocation: google.maps.LatLngLiteral;
-  propertiesData: any
+  propertiesData: any;
+  selectedPropertyId?: string | null;
 }
 
 function modifyProperty(rawData: any) {
   if (!Array.isArray(rawData)) return [];
 
-  return rawData
-    // 1. Filter out items missing latitude or longitude
-    .filter((item) => {
-      const basic = item.property_details?.basic;
-      return basic?.latitude && basic?.longitude;
-    })
-    // 2. Map to your desired structure
-    .map((item: any) => {
-      const { basic, rent_details, features, additional_information, documents } =
-        item.property_details;
+  return (
+    rawData
+      // 1. Filter out items missing latitude or longitude
+      .filter((item) => {
+        const basic = item.property_details?.basic;
+        const lat = basic?.latitude || item.latitude;
+        const lng = basic?.longitude || item.longitude;
+        return lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
+      })
+      // 2. Map to your desired structure
+      .map((item: any) => {
+        const {
+          basic,
+          rent_details,
+          features,
+          additional_information,
+          documents,
+        } = item.property_details || {};
+        const lat = parseFloat(basic?.latitude || item.latitude);
+        const lng = parseFloat(basic?.longitude || item.longitude);
 
-      return {
-        id: item._id, // Added missing comma here
-        position: [parseFloat(basic.latitude), parseFloat(basic.longitude)],
-        title: basic.property_name,
-        description: additional_information.description,
-        price: `$${rent_details.weekly_rent_price || "0"}/week`,
-        bedrooms: parseInt(features.no_of_bedrooms),
-        bathrooms: parseInt(features.no_of_bathrooms),
-        area: `${features.floor_area} sq ft`,
-        imageUrl: documents && documents.images.length > 0 ? documents.images[0].url : IMAGES.villa_image,
-        location: `${basic.region_area}, ${basic.state}`,
-        beds: parseInt(features.no_of_bedrooms),
-        baths: parseInt(features.no_of_bathrooms),
-        featured: item.is_cms_featured,
-        forRent: basic.is_available_for_rent,
-        postedDate: new Date(item.createdAt).toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        }),
-      };
-    });
+        return {
+          id: item._id, // Added missing comma here
+          position: [lat, lng],
+          title: basic?.property_name || item.title || "Property",
+          description: additional_information?.description || "",
+          price: `$${rent_details?.weekly_rent_price || "0"}/week`,
+          bedrooms: parseInt(features?.no_of_bedrooms || "0"),
+          bathrooms: parseInt(features?.no_of_bathrooms || "0"),
+          area: `${features?.floor_area || 0} sq ft`,
+          imageUrl:
+            documents && documents.images && documents.images.length > 0
+              ? documents.images[0].url
+              : IMAGES.villa_image,
+          location: `${basic?.region_area || ""}, ${basic?.state || ""}`,
+          beds: parseInt(features?.no_of_bedrooms || "0"),
+          baths: parseInt(features?.no_of_bathrooms || "0"),
+          featured: item.is_cms_featured,
+          forRent: basic?.is_available_for_rent,
+          postedDate: item.createdAt
+            ? new Date(item.createdAt).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
+            : "",
+        };
+      })
+  );
 }
-
 
 const properties: Property[] = [
   {
@@ -123,24 +139,18 @@ const properties: Property[] = [
   },
 ];
 
-
-const GoogleMapComponent = ({ center, zoom, userLocation, propertiesData }: Props) => {
-  const modifiedProperties = modifyProperty(propertiesData)
-  const [selectedProperty, setSelectedProperty] = useState<any | null>(
-    null,
-  );
+const GoogleMapComponent = ({
+  center,
+  zoom,
+  userLocation,
+  propertiesData,
+  selectedPropertyId,
+}: Props) => {
+  const modifiedProperties = modifyProperty(propertiesData);
+  const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const onMapLoad = useCallback((mapInstance: google.maps.Map) => {
-    setMap(mapInstance);
-    // Auto-fit markers on initial load
-    const bounds = new window.google.maps.LatLngBounds();
-    properties.forEach((property) => {
-      bounds.extend({ lat: property.position[0], lng: property.position[1] });
-    });
-    mapInstance.fitBounds(bounds);
-  }, []);
 
-  const handleMarkerClick = (property: Property) => {
+  const handleMarkerClick = (property: any) => {
     setSelectedProperty(property);
   };
 
@@ -155,7 +165,9 @@ const GoogleMapComponent = ({ center, zoom, userLocation, propertiesData }: Prop
     strokeColor: "white",
     strokeWeight: 2,
   };
+
   const onLoad = (mapInstance: google.maps.Map) => {
+    setMap(mapInstance);
     const bounds = new window.google.maps.LatLngBounds();
 
     modifiedProperties.forEach((property) => {
@@ -169,6 +181,32 @@ const GoogleMapComponent = ({ center, zoom, userLocation, propertiesData }: Prop
       mapInstance.fitBounds(bounds); // Fit the map to the bounds of the markers
     }
   };
+
+  // React to selectedPropertyId changes: focus and open info window
+  useEffect(() => {
+    if (selectedPropertyId && modifiedProperties.length > 0) {
+      const match = modifiedProperties.find(
+        (p: any) => p.id === selectedPropertyId,
+      );
+      if (match) {
+        setSelectedProperty(match);
+        if (map && match.position) {
+          map.panTo({ lat: match.position[0], lng: match.position[1] });
+          map.setZoom(16);
+        }
+      }
+    }
+  }, [selectedPropertyId, modifiedProperties, map]);
+
+  // React to center and zoom changes
+  useEffect(() => {
+    if (map && center && center.lat && center.lng) {
+      map.panTo(center);
+      if (zoom) {
+        map.setZoom(zoom);
+      }
+    }
+  }, [center, zoom, map]);
 
   return (
     <GoogleMap

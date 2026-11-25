@@ -5,6 +5,7 @@ import { Sidebar } from "./Layout/Sidebar";
 import { mockUser } from "./data/mockData";
 import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import RenterPreferencesModalManager from "./modals/RenterPreferencesModalManager";
 
 const Layout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -46,21 +47,24 @@ const Layout = () => {
             >
                 {/* ===== Header ===== */}
                 <header className="sticky top-0 z-20 w-full bg-white border-b border-gray-200 transition-all duration-300">
-                    <div className="px-3 sm:px-6 py-4">
+                    <div className="px-3 sm:px-6 py-1.5 sm:py-2 flex items-center min-h-[44px]">
                         <Header user={mockUser} customUser={user} onMenuToggle={toggleSidebar} />
                     </div>
                 </header>
 
                 {/* ===== Main Content ===== */}
-                <main className="flex-1 w-full px-3 sm:px-6 pt-2 overflow-y-auto thin-scrollbar h-screen">
+                <main className="flex-1 min-h-0 w-full px-3 sm:px-6 pt-2 pb-6 overflow-y-auto thin-scrollbar">
                     <Outlet />
                 </main>
 
                 {/* ===== Footer ===== */}
-                {/* <footer className="border-t border-gray-200 bg-white py-4 px-6"> */}
+                <div className="shrink-0 w-full">
                     <Footer />
-                {/* </footer> */}
+                </div>
             </div>
+
+            {/* Renter Matching Preferences Auto-Popup Manager */}
+            <RenterPreferencesModalManager />
         </div>
     );
 };

@@ -94,10 +94,10 @@ const settings = {
   dots: true,
   infinite: true,
   speed: 500,
-  slidesToShow: 3,
+  slidesToShow: 1,
   slidesToScroll: 1,
-  autoplay: true, // Enable autoplay
-  autoplaySpeed: 3000, // Duration for each slide (in milliseconds)
+  autoplay: true,
+  autoplaySpeed: 3500,
 };
 
 const PropertySheet: React.FC<PostProps> = ({
@@ -465,20 +465,20 @@ const PropertySheet: React.FC<PostProps> = ({
 
   return (
     // <SheetContent className="w-[400px] sm:w-[540px] !max-w-full" >
-    <div className="bg-white p-4 sm:p-10 rounded-xl overflow-y-auto thin-scrollbar ">
+    <div className="bg-white p-4 sm:p-6 rounded-xl overflow-y-auto thin-scrollbar space-y-5 text-slate-800">
       {/* HEAD SECTION  */}
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="font-sans font-semibold text-foreground text-xl tracking-[0] leading-7">
+      <div className="flex justify-between items-center pr-8">
+        <h3 className="font-sans font-bold text-slate-900 text-lg tracking-tight leading-snug">
           {property?.property_details?.basic?.property_name &&
-            property?.property_details?.basic?.property_name.length > 20
-            ? `${property?.property_details?.basic?.property_name.slice(0, 20)}...`
+            property?.property_details?.basic?.property_name.length > 28
+            ? `${property?.property_details?.basic?.property_name.slice(0, 28)}...`
             : property?.property_details?.basic?.property_name}
         </h3>
         {user?.role !== "GUEST" ? (
           user?.role === "TENANT" ? (
-            <div className="flex justify-between items-center gap-2">
+            <div className="flex justify-between items-center gap-2 shrink-0">
               <a
-                className="p-[9px] border rounded-lg"
+                className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                 href="#"
                 onClick={() =>
                   property?.is_wishlist
@@ -488,26 +488,20 @@ const PropertySheet: React.FC<PostProps> = ({
               >
                 <Icon
                   name="Favourite"
-                  className={`w-5 h-5`}
+                  className="w-4 h-4"
                   fill={`${property?.is_wishlist ? "#F55C5C" : "transparent"}`}
                 />
               </a>
-              {/* <a className="p-[9px] border rounded-lg" href="#">
-                <Icon name="ShareCusIcon" className={`w-5 h-5`} />
-              </a> */}
             </div>
           ) : (
-            <div className="flex justify-between items-center gap-2">
+            <div className="flex justify-between items-center gap-2 shrink-0">
               {
                 user?.id == (property?.created_by?._id || property?.created_by) ? (
                   <div className="flex items-center gap-2">
-                    <div className="font-sanstext-card-foreground text-sm font-semibold">
+                    <div className="text-xs font-semibold text-slate-700">
                       Available for Rent?
                     </div>
-                    <a
-                      href="#" /* onClick={() => rentalAvailability(String(id))} */
-                    >
-                      {/* <ToggleButton defaultToggled={property?.property_details?.basic?.is_available_for_rent || false} /> */}
+                    <a href="#">
                       <ToggleButton
                         isToggled={
                           property?.property_details?.basic
@@ -523,37 +517,27 @@ const PropertySheet: React.FC<PostProps> = ({
               <div className="relative inline-block text-left">
                 {user?.id == (property?.created_by?._id || property?.created_by) ? (
                   <div>
-                    <a href="#" onClick={toggleDropdown}>
-                      <EllipsisVertical className="text-[#00000054]" />
+                    <a href="#" onClick={toggleDropdown} className="p-1 block">
+                      <EllipsisVertical className="w-4 h-4 text-slate-400 hover:text-slate-700 transition-colors" />
                     </a>
                   </div>
                 ) : null}
 
-
                 {isDropdownOpen && (
-                  <div className="absolute right-0 z-10 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg">
-                    <div
-                      className="py-1"
-                      role="menu"
-                      aria-orientation="vertical"
-                      aria-labelledby="options-menu"
+                  <div className="absolute right-0 z-10 mt-2 w-36 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden py-1">
+                    <a
+                      onClick={handleEdit}
+                      className="block px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer"
                     >
-                      <a
-                        onClick={handleEdit}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        role="menuitem"
-                      >
-                        Edit
-                      </a>
-                      <a
-                        href="#"
-                        onClick={() => handleDelete(String(id))}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        role="menuitem"
-                      >
-                        Delete
-                      </a>
-                    </div>
+                      Edit
+                    </a>
+                    <a
+                      href="#"
+                      onClick={() => handleDelete(String(id))}
+                      className="block px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 cursor-pointer"
+                    >
+                      Delete
+                    </a>
                   </div>
                 )}
               </div>
@@ -561,149 +545,125 @@ const PropertySheet: React.FC<PostProps> = ({
           )
         ) : null}
       </div>
-      <div className="flex justify-between items-center mb-2">
-        <div className="flex flex-wrap items-center gap-2 md:gap-4">
-          <div className="flex items-center gap-1">
-            <img src={IMAGES.beds} alt="" className="w-[20px] h-[20px]" />
-            <span className="font-sans font-normal text-lg text-card">
-              Bedroom:
-            </span>
-            <span className="font-sans font-semibold text-primary-foreground text-lg">
+
+      {/* Property Meta & Price */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+        <div className="flex flex-wrap items-center gap-3 text-slate-600">
+          <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+            <img src={IMAGES.beds} alt="" className="w-3.5 h-3.5 object-contain" />
+            <span className="text-xs font-medium text-slate-500">Beds:</span>
+            <span className="text-xs font-bold text-slate-900">
               {property?.property_details?.features?.no_of_bedrooms || 0}
             </span>
           </div>
 
-          {/* <div className="flex items-center gap-1">
-            <img src={IMAGES.beds} alt="" className="w-[20px] h-[20px]" />
-            <span className="font-sans font-normal text-lg text-card">
-              Garage:
-            </span>
-            <span className="font-sans font-semibold text-primary-foreground text-lg">
-              {property?.property_details?.features?.no_of_garage || 0}
-            </span>
-          </div> */}
-
-          <div className="flex items-center gap-1">
-            <img src={IMAGES.baths} alt="" className="w-[20px] h-[20px]" />
-            <span className="font-sans font-normal text-lg text-card">
-              Baths:
-            </span>
-            <span className="font-sans font-semibold text-primary-foreground text-lg">
+          <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+            <img src={IMAGES.baths} alt="" className="w-3.5 h-3.5 object-contain" />
+            <span className="text-xs font-medium text-slate-500">Baths:</span>
+            <span className="text-xs font-bold text-slate-900">
               {property?.property_details?.features?.no_of_bathrooms || 0}
             </span>
           </div>
 
-          <div className="flex items-center gap-1">
-            <img src={IMAGES.sqm} alt="" className="w-[20px] h-[20px]" />
-            <span className="font-sans font-normal text-lg text-card">sqm:</span>
-            <span className="font-sans font-semibold text-primary-foreground text-lg">
-              {property?.property_details?.features?.floor_area || 0}
+          <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+            <img src={IMAGES.sqm} alt="" className="w-3.5 h-3.5 object-contain" />
+            <span className="text-xs font-medium text-slate-500">Area:</span>
+            <span className="text-xs font-bold text-slate-900">
+              {property?.property_details?.features?.floor_area || 0} sqm
             </span>
           </div>
         </div>
 
-        <div className="flex items-center">
-          <div className="font-sans font-bold text-primary text-2xl">
-            {"$" + property?.property_details?.rent_details?.weekly_rent_price
-              ? Number(
-                property?.property_details?.rent_details?.weekly_rent_price,
-              ) * 4
-              : 0 + ".00"}
-          </div>
-          <p className="text-xl font-normal text-muted-foreground">/month</p>
+        <div className="flex items-baseline gap-1">
+          <span className="font-extrabold text-blue-600 text-lg">
+            ${property?.property_details?.rent_details?.weekly_rent_price
+              ? Number(property?.property_details?.rent_details?.weekly_rent_price).toLocaleString()
+              : 0}
+          </span>
+          <span className="text-xs text-slate-500 font-medium">/week</span>
         </div>
       </div>
+
       <div className="flex flex-col gap-5">
         {/* image section  */}
-        <div>
-          <div className={`grid grid-cols-1 gap-4 md:gap-6 mb-7`}>
-            <Slider {...settings}>
-              {property?.property_details?.documents?.images.map(
-                (property: any) => (
-                  <div key={property?._id} className="px-2">
-                    <Card
-                      key={property?._id}
-                      className="bg-white rounded-2xl overflow-hidden shadow-sm"
-                    >
-                      <div className="relative">
-                        <div
-                          className="w-full h-[180px] bg-cover bg-center relative"
-                          style={{
-                            backgroundImage: `url(${property.url})`,
-                          }}
-                        ></div>
+        {property?.property_details?.documents?.images?.length > 0 && (
+          <div className="w-full">
+            <div className="rounded-2xl overflow-hidden shadow-2xs border border-slate-100">
+              <Slider {...settings}>
+                {property?.property_details?.documents?.images.map(
+                  (img: any, idx: number) => (
+                    <div key={img?._id || idx} className="outline-none">
+                      <div className="w-full h-[220px] bg-slate-100">
+                        <img
+                          src={img?.url || IMAGES.villa_image}
+                          alt="Property"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                    </Card>
-                  </div>
-                ),
-              )}
-            </Slider>
+                    </div>
+                  ),
+                )}
+              </Slider>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* REQUEST SECTION  */}
         <div>
           {user?.id == (property?.created_by?._id || property?.created_by) ? (
-            <div className="border rounded-md border-border-input">
-              <p className="text-xl font-semibold flex justify-center py-[26px]">
-                Requests
+            <div className="border rounded-2xl border-slate-200/80 p-4 bg-slate-50/50">
+              <p className="text-sm font-bold text-slate-800 mb-3">
+                Tenant Requests
               </p>
-              <div className={`grid grid-cols-1 gap-4 md:gap-6 mb-7`}>
+              <div className="grid grid-cols-1 gap-3">
                 {list?.length === 0 ? (
-                  <p className="flex items-center justify-center">
-                    No Request Found
+                  <p className="text-xs text-slate-400 italic py-2">
+                    No requests found
                   </p>
                 ) : (
                   <Slider {...settings}>
                     {list?.map((sender: any) => (
-                      <div key={sender._id} className="px-2">
-                        <Card
-                          key={sender._id}
-                          className="bg-white rounded-2xl overflow-hidden shadow-sm"
-                        >
-                          <div className="flex flex-col gap-2 p-4 items-center">
-                            <div>
-                              <img
-                                src={IMAGES.dummy_img}
-                                alt=""
-                                className="w-[49px] h-[49px] rounded-full"
-                              />
-                            </div>
-                            <div className="flex flex-col items-center">
-                              <p className="text-sm font-semibold text-[#161E2D]">{`${sender?.requester?.first_name ?? ""} ${sender?.requester?.middle_name ?? ""} ${sender?.requester?.last_name ?? ""}`}</p>
-                              <p className="text-xs font-semibold text-muted-foreground">
-                                {sender?.requester?.phone_number ?? ""}
-                              </p>
-                            </div>
-                            <div className="flex">
-                              <Button
-                                variant="ghost"
-                                size="lg"
-                                value-data={sender.id}
-                                className="px-3 hover:bg-primary rounded-[99px] text-primary hover:text-white shadow-none border border-primary py-2 text-xs lg:text-sm 2xl:text-base"
-                                onClick={() =>
-                                  sender?._id !== undefined &&
-                                  handleRequestAccept(sender?._id)
-                                }
-                                disabled={sender?.status == "APPROVED"}
-                              >
-                                {sender?.status == "APPROVED"
-                                  ? "APPROVED"
-                                  : "Accept Request"}
-                              </Button>
-                              {sender?.status == "APPROVED" ? <div
-                                className="mt-2 ml-2"
+                      <div key={sender._id} className="px-1 outline-none">
+                        <div className="bg-white rounded-xl border border-slate-100 p-3 shadow-2xs flex flex-col gap-2 items-center">
+                          <img
+                            src={IMAGES.dummy_img}
+                            alt=""
+                            className="w-10 h-10 rounded-full object-cover border"
+                          />
+                          <div className="flex flex-col items-center">
+                            <p className="text-xs font-bold text-slate-900">{`${sender?.requester?.first_name ?? ""} ${sender?.requester?.middle_name ?? ""} ${sender?.requester?.last_name ?? ""}`}</p>
+                            <p className="text-[11px] text-slate-500">
+                              {sender?.requester?.phone_number ?? ""}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="rounded-full text-xs font-semibold px-3 py-1 h-7 border border-blue-600 text-blue-600 hover:bg-blue-50"
+                              onClick={() =>
+                                sender?._id !== undefined &&
+                                handleRequestAccept(sender?._id)
+                              }
+                              disabled={sender?.status == "APPROVED"}
+                            >
+                              {sender?.status == "APPROVED"
+                                ? "Approved"
+                                : "Accept Request"}
+                            </Button>
+                            {sender?.status == "APPROVED" && (
+                              <button
+                                type="button"
+                                className="p-1 rounded-full text-blue-600 hover:bg-blue-50 transition-colors"
                                 onClick={() =>
                                   property?._id !== undefined && handleSendMessage(sender?.requester?._id)
                                 }
                               >
-                                <Icon name="MessageResponse" className={`w-5 h-5 ${1 > 0 ? "stroke-primary" : "stroke-[#A3ABB0]"}`} fill="none" />
-                              </div> : null}
-
-                            </div>
-
+                                <Icon name="MessageResponse" className="w-4 h-4 stroke-primary" fill="none" />
+                              </button>
+                            )}
                           </div>
-                        </Card>
+                        </div>
                       </div>
                     ))}
                   </Slider>
@@ -711,338 +671,160 @@ const PropertySheet: React.FC<PostProps> = ({
               </div>
             </div>
           ) : (user?.role == "TENANT" || user?.role == "LANDLORD") && owner !== null ? (
-            <Card
-              className={`overflow-hidden hover:shadow-lg transition-shadow p-5 border border-[#1563DF54]`}
-            >
-              <h2 className="font-bold text-xl">
-                {owner?.role} DETAILS
-              </h2>
-              <div className="flex mt-2 justify-between items-center">
-                {/* <div className="relative flex items-center gap-3">
-                    <img
-                      src={IMAGES.user_img || "/placeholder.svg"}
-                      alt=""
-                      className="w-18 h-18 object-cover"
-                    />
-                    <h2 className="text-lg font-semibold">Landlord Details</h2>
-                    
-                  </div> */}
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  {owner?.role || "Landlord"} Details
+                </span>
+                {property?.send_request_status === "APPROVED" && (
+                  <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                    Approved
+                  </span>
+                )}
+              </div>
 
-                <div className="mt-4 space-y-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex gap-4">
-                      {/* Profile Image */}
-                      <img
-                        src={
-                          owner?.profile_image ||
-                          IMAGES.user_img ||
-                          "/placeholder.svg"
-                        }
-                        alt="Profile"
-                        className="w-16 h-16 rounded-full object-cover border"
-                      />
-
-                      {/* Primary Identification */}
-                      <div>
-                        <h3 className="text-lg font-semibold leading-tight">
-                          {owner?.first_name} {owner?.middle_name}{" "}
-                          {owner?.last_name}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          @{owner?.user_name}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Action Button */}
-                    {/* <Button
-        variant="ghost"
-        className="px-6 rounded-3xl text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
-        onClick={() => property?._id && handleRequestSend(property?._id)}
-        disabled={property?.is_send_request}
-      >
-        {property?.is_send_request ? "Request Sent" : "Send Request"}
-      </Button> */}
-                  </div>
-
-                  {/* Detailed Info Grid */}
-                  <div className="grid grid-cols-1 gap-y-4 gap-x-4 pt-3 border-t border-gray-100">
-                    <div className="text-sm">
-                      {/* <span className="text-gray-500 block">Email Address</span>
-                      <span className="font-medium">{owner?.email}</span> */}
-                    </div>
-                    <div className="text-sm">
-                      {/* <span className="text-gray-500 block">Phone Number</span>
-                      <span className="font-medium">
-                        +{owner?.phone_extension || "1"} {owner?.phone_number}
-                      </span> */}
-                    </div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <img
+                    src={owner?.profile_image || IMAGES.user_img || "/placeholder.svg"}
+                    alt="Profile"
+                    className="w-12 h-12 rounded-full object-cover border border-slate-200 shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-bold text-slate-900 leading-tight truncate">
+                      {owner?.first_name} {owner?.middle_name} {owner?.last_name}
+                    </h4>
+                    <p className="text-xs text-slate-500 truncate mt-0.5">
+                      @{owner?.user_name || "landlord"}
+                    </p>
                     {owner?.company_details?.company_name && (
-                      <>
-                        <div className="text-sm">
-                          <span className="text-gray-500 block">Company</span>
-                          <span className="font-medium">
-                            {owner?.company_details.company_name}
-                          </span>
-                        </div>
-                        <div className="text-sm">
-                          <span className="text-gray-500 block">
-                            Company Address
-                          </span>
-                          <span className="font-medium text-xs leading-none">
-                            {owner?.company_details.company_address}
-                          </span>
-                        </div>
-                      </>
+                      <p className="text-[11px] text-slate-600 font-medium truncate mt-0.5">
+                        {owner?.company_details.company_name}
+                      </p>
                     )}
                   </div>
                 </div>
-                {
-                  user?.role === "TENANT" ? (
-                    <div className="flex gap-2">
-                      {property?.send_request_status == "APPROVED" ? (
+
+                {user?.role === "TENANT" && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    {property?.send_request_status === "APPROVED" ? (
+                      <>
                         <Button
                           variant="ghost"
-                          size="lg"
-                          /* value-data={property._id} */
-                          className="px-3 bg-blue-500 pl-3 pr-3 rounded-3xl text-white bg-primary px-[30px] hover:border hover:border-primary hover:text-primary"
-                          onClick={() =>
-                            property?._id !== undefined &&
-                            handleRequestSend(property?._id)
-                          }
+                          size="sm"
+                          className="rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold px-4 py-1.5 h-8 border border-emerald-200"
                           disabled={true}
                         >
                           Request Approved
                         </Button>
-                      ) :
                         <Button
                           variant="ghost"
-                          size="lg"
-                          /* value-data={property._id} */
-                          className="px-3 bg-blue-500 pl-3 pr-3 rounded-3xl text-white bg-primary px-[30px] hover:border hover:border-primary hover:text-primary"
-                          onClick={() =>
-                            property?._id !== undefined &&
-                            handleRequestSend(property?._id)
-                          }
-                          disabled={property?.is_send_request == true}
-                        >
-                          {property?.is_send_request == true
-                            ? "Request Sended"
-                            : "Send Request"}
-                        </Button>}
-                      {property?.send_request_status == "APPROVED" ? (
-                        <Button
-                          variant="ghost"
-                          size="lg"
-                          /* value-data={property._id} */
-                          className="px-3 bg-blue-500 pl-3 pr-3 rounded-3xl text-white bg-primary px-[30px] hover:border hover:border-primary hover:text-primary"
-                          onClick={() =>
-                            property?._id !== undefined && handleSendMessage(owner?._id)
-                          }
-                          disabled={property?.is_send_request == false}
+                          size="sm"
+                          className="rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-1.5 h-8 transition-colors"
+                          onClick={() => property?._id !== undefined && handleSendMessage(owner?._id)}
                         >
                           Chat
                         </Button>
-                      ) : null}
-                    </div>
-                  ) : null
-                }
-
-
+                      </>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-5 py-2 h-9 transition-colors shadow-xs disabled:opacity-60"
+                        onClick={() => property?._id !== undefined && handleRequestSend(property?._id)}
+                        disabled={property?.is_send_request === true}
+                      >
+                        {property?.is_send_request === true ? "Request Sent" : "Send Request"}
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
-            </Card>
-          ) : (
-            ""
-          )}
+            </div>
+          ) : null}
         </div>
 
         {/* Overview section  */}
-        <div className="">
-          {/* <p className="text-base font-semibold mt-4">Overview</p> */}
-          <p className="text-xl font-semibold mb-3">Overview</p>
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-y-4 sm:grid-cols-4 sm:gap-y-0">
-              <div className="flex gap-2 items-center">
-                <div className="border p-2 rounded-md flex">
-                  <Icon name="PropertyHome" className={`w-5 h-5`} />
+        <div>
+          <p className="text-sm font-bold text-slate-900 mb-2.5">Overview</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {[
+              { icon: "PropertyHome", label: "Property ID", value: property?.property_details?.basic?.property_no || "N/A" },
+              { icon: "PropertyType", label: "Type", value: property?.property_details?.basic?.property_type_id?.name || "Apartment" },
+              { icon: "Garage", label: "Garages", value: property?.property_details?.features?.no_of_garage ?? 0 },
+              { icon: "Bedroom", label: "Bedrooms", value: property?.property_details?.features?.no_of_bedrooms ?? 0 },
+              { icon: "Bathroom", label: "Bathrooms", value: property?.property_details?.features?.no_of_bathrooms ?? 0 },
+              { icon: "LandSize", label: "Land Size", value: property?.property_details?.features?.land_size ? `${property.property_details.features.land_size} sqm` : "N/A" },
+              { icon: "MeterScale", label: "Size", value: property?.property_details?.features?.floor_area ? `${property.property_details.features.floor_area} sqm` : "N/A" },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className="flex items-center gap-2 p-2 rounded-xl bg-slate-50/80 border border-slate-100 hover:border-slate-200 transition-colors"
+              >
+                <div className="w-7 h-7 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center shrink-0 text-slate-600 shadow-2xs">
+                  <Icon name={item.icon} className="w-3.5 h-3.5" />
                 </div>
-                <p className="flex flex-col text-card">
-                  <span className="text-xs font-normal text-card">ID: </span>
-                  <span className="text-sm font-semibold">
-                    {property?.property_details?.basic?.property_no || "N/A"}
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider truncate">
+                    {item.label}
                   </span>
-                </p>
-              </div>
-              <div className="flex gap-2 items-center">
-                <div className="border p-2 rounded-md flex">
-                  <Icon name="PropertyType" className={`w-5 h-5`} />
+                  <span className="text-xs font-semibold text-slate-800 truncate" title={String(item.value)}>
+                    {item.value}
+                  </span>
                 </div>
-                <p className="flex flex-col text-card">
-                  <span className="text-xs font-normal text-card">Type: </span>
-                  <span className="text-sm font-semibold">
-                    {property?.property_details?.basic?.property_type_id
-                      ?.name || ""}
-                  </span>
-                </p>
               </div>
-              <div className="flex gap-2 items-center">
-                <div className="border p-2 rounded-md flex">
-                  <Icon name="Garage" className={`w-5 h-5`} />
-                </div>
-                <p className="flex flex-col text-card">
-                  <span className="text-xs font-normal text-card">
-                    Garages:{" "}
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {property?.property_details?.features?.no_of_garage || 0}
-                  </span>
-                </p>
-              </div>
-              <div className="flex gap-2 items-center">
-                <div className="border p-2 rounded-md flex">
-                  <Icon name="Bedroom" className={`w-5 h-5`} />
-                </div>
-                <p className="flex flex-col text-card">
-                  <span className="text-xs font-normal text-card">
-                    Bedrooms:{" "}
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {property?.property_details?.features?.no_of_bedrooms || 0}
-                  </span>
-                </p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-y-4 sm:grid-cols-4 sm:gap-y-0">
-              <div className="flex gap-2 items-center">
-                <div className="border p-2 rounded-md flex">
-                  <Icon name="Bathroom" className={`w-5 h-5`} />
-                </div>
-                <p className="flex flex-col text-card">
-                  <span className="text-xs font-normal text-card">
-                    Bathrooms:{" "}
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {property?.property_details?.features?.no_of_bathrooms || 0}
-                  </span>
-                </p>
-              </div>
-              <div className="flex gap-2 items-center">
-                <div className="border p-2 rounded-md flex">
-                  <Icon name="LandSize" className={`w-5 h-5`} />
-                </div>
-                <p className="flex flex-col text-card">
-                  <span className="text-xs font-normal text-card">
-                    Land Size:{" "}
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {property?.property_details?.features?.land_size || 0}
-                  </span>
-                </p>
-              </div>
-              {/* <div className="flex gap-2 items-center">
-                <div className="border p-2 rounded-md flex">
-                  <Icon name="YearBuilt" className={`w-5 h-5`} />
-                </div> */}
-                {/* <p className="flex flex-col text-card"> */}
-                  {/* <span className="text-xs font-normal text-card">
-                    Year Built:{" "}
-                  </span> */}
-                  {/* <span className="text-sm font-semibold">
-                    {property?.property_details?.basic?.year_built
-                      ? new Date(
-                        property?.property_details?.basic?.year_built,
-                      ).getFullYear()
-                      : 0}
-                  </span> */}
-                {/* </p> */}
-              {/* </div> */}
-              <div className="flex gap-2 items-center">
-                <div className="border p-2 rounded-md flex">
-                  <Icon name="MeterScale" className={`w-5 h-5`} />
-                </div>
-                <p className="flex flex-col text-card">
-                  <span className="text-xs font-normal text-card">Size: </span>
-                  <span className="text-sm font-semibold">
-                    {property?.property_details?.features?.floor_area || 0} sqm
-                  </span>
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
-        {property?.property_details?.additional_information?.description !=
-          null &&
-          property?.property_details?.additional_information?.description
-            .length > 0 && (
-            <div>
-              <p className="text-xl font-semibold">Description</p>
-              <div className="py-3">
-                <p className="font-normal text-xs text-muted-foreground">
-                  {property?.property_details?.additional_information
-                    ?.description.length > 200 && !isExpanded
-                    ? `${property?.property_details?.additional_information?.description.slice(0, 200)}...`
-                    : property?.property_details?.additional_information
-                      ?.description}
-                </p>
-                {property?.property_details?.additional_information?.description
-                  .length > 200 && (
-                    <a
-                      href="#"
-                      onClick={handleToggle}
-                      className="text-sm font-semibold text-primary underline"
-                    >
-                      {isExpanded ? "View Less" : "View More"}
-                    </a>
-                  )}
-              </div>
+
+        {property?.property_details?.additional_information?.description && (
+          <div>
+            <p className="text-sm font-bold text-slate-900 mb-2">Description</p>
+            <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100">
+              <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                {property?.property_details?.additional_information?.description.length > 200 && !isExpanded
+                  ? `${property?.property_details?.additional_information?.description.slice(0, 200)}...`
+                  : property?.property_details?.additional_information?.description}
+              </p>
+              {property?.property_details?.additional_information?.description.length > 200 && (
+                <button
+                  type="button"
+                  onClick={handleToggle}
+                  className="text-xs font-semibold text-blue-600 hover:underline mt-1.5 inline-block"
+                >
+                  {isExpanded ? "View Less" : "View More"}
+                </button>
+              )}
             </div>
-          )}
-        <div>
-          <p className="text-xl font-semibold">Map location</p>
-          <div className="mt-4 mb-6">
-            {/* <GoogleMapComponent /> */}
-            {/* <MapIframe lat={property?.property_details?.basic?.latitude || -35.3063562} lng={property?.property_details?.basic?.longitude || 149.1267865} /> */}
           </div>
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-0">
-              <div className="grid grid-cols-3">
-                <p className="text-xs font-normal text-card">Address</p>
-                <p className="text-xs font-semibold text-primary">
-                  {property?.property_details?.basic?.full_address || ""}
-                </p>
-              </div>
-              <div className="grid grid-cols-3">
-                <p className="text-xs font-normal text-card">Postal Code</p>
-                <p className="text-xs font-semibold text-primary">
-                  {property?.property_details?.basic?.pincode || ""}
-                </p>
-              </div>
+        )}
+
+        <div>
+          <p className="text-sm font-bold text-slate-900 mb-2.5">Map location</p>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-100">
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block">Address</span>
+              <span className="text-xs font-semibold text-slate-800 truncate block mt-0.5" title={property?.property_details?.basic?.full_address || "N/A"}>
+                {property?.property_details?.basic?.full_address || "N/A"}
+              </span>
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-0">
-              <div className="grid grid-cols-3">
-                <p className="text-xs font-normal text-card">City</p>
-                <p className="text-xs font-semibold text-primary">
-                  {property?.property_details?.basic?.subrup || ""}
-                </p>
-              </div>
-              <div className="grid grid-cols-3">
-                <p className="text-xs font-normal text-card">Area</p>
-                <p className="text-xs font-semibold text-primary">
-                  {property?.property_details?.basic?.region_area || ""}
-                </p>
-              </div>
+            <div className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-100">
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block">Postal Code</span>
+              <span className="text-xs font-semibold text-slate-800 block mt-0.5">
+                {property?.property_details?.basic?.pincode || "N/A"}
+              </span>
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-0">
-              <div className="grid grid-cols-3">
-                <p className="text-xs font-normal text-card">State/Country</p>
-                <p className="text-xs font-semibold text-primary">
-                  {property?.property_details?.basic?.state || ""}
-                </p>
-              </div>
-              <div className="grid grid-cols-3">
-                <p className="text-xs font-normal text-card">Country</p>
-                <p className="text-xs font-semibold text-primary">Australia</p>
-              </div>
+            <div className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-100">
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block">City / Suburb</span>
+              <span className="text-xs font-semibold text-slate-800 block mt-0.5">
+                {property?.property_details?.basic?.subrup || "N/A"}
+              </span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-100">
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block">Area / State</span>
+              <span className="text-xs font-semibold text-slate-800 block mt-0.5">
+                {[property?.property_details?.basic?.region_area, property?.property_details?.basic?.state].filter(Boolean).join(", ") || "N/A"}
+              </span>
             </div>
           </div>
         </div>
@@ -1055,417 +837,164 @@ const PropertySheet: React.FC<PostProps> = ({
         </div> */}
         {/* \AMENITIES  */}
         <div>
-          <p className="text-xl font-semibold mb-3">Amenities And Features</p>
+          <p className="text-sm font-bold text-slate-900 mb-2.5">Amenities And Features</p>
           {property?.property_details?.amenities_features &&
             property?.property_details?.amenities_features.length > 0 ? (
-            <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3 list-disc pl-5">
-              {property?.property_details?.amenities_features.map(
-                (
-                  feature:
-                    | string
-                    | number
-                    | bigint
-                    | boolean
-                    | React.ReactElement<
-                      unknown,
-                      string | React.JSXElementConstructor<any>
-                    >
-                    | Iterable<React.ReactNode>
-                    | React.ReactPortal
-                    | Promise<
-                      | string
-                      | number
-                      | bigint
-                      | boolean
-                      | React.ReactPortal
-                      | React.ReactElement<
-                        unknown,
-                        string | React.JSXElementConstructor<any>
-                      >
-                      | Iterable<React.ReactNode>
-                      | null
-                      | undefined
-                    >
-                    | null
-                    | undefined,
-                  index: React.Key | null | undefined,
-                ) => (
-                  <li key={index} className="text-xs font-normal text-card">
-                    {feature}
-                  </li>
-                ),
-              )}
-            </ul>
+            <div className="flex flex-wrap gap-1.5">
+              {property?.property_details?.amenities_features.map((feature: any, index: number) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center text-xs font-medium bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200/60"
+                >
+                  {String(feature)}
+                </span>
+              ))}
+            </div>
           ) : (
-            <p className="text-xs font-normal text-card">
-              No amenities available
-            </p>
+            <p className="text-xs text-slate-400 italic">No amenities available</p>
           )}
-          <div className="mt-2"></div>
 
-          {property?.property_details?.outdoor && (
-            (() => {
-              const allOutdoorFeatures = [
-                ...(property.property_details.outdoor.features || []),
-                ...(property.property_details.outdoor.outdoor_entering_area || [])
-              ];
+          {property?.property_details?.outdoor && (() => {
+            const allOutdoorFeatures = [
+              ...(property.property_details.outdoor.features || []),
+              ...(property.property_details.outdoor.outdoor_entering_area || [])
+            ];
 
-              return allOutdoorFeatures.length > 0 ? (
-                <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3 list-disc pl-5">
-                  {allOutdoorFeatures.map((feature, index) => (
-                    <li key={index} className="text-xs font-normal text-card">
-                      {feature as React.ReactNode}
-                    </li>
+            return allOutdoorFeatures.length > 0 ? (
+              <div className="mt-2.5">
+                <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block mb-1.5">
+                  Outdoor Features
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {allOutdoorFeatures.map((feature: any, index: number) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center text-xs font-medium bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200/60"
+                    >
+                      {String(feature)}
+                    </span>
                   ))}
-                </ul>
-              ) : (
-                <p className="text-xs font-normal text-card">
-                  No Outdoor feature available
-                </p>
-              );
-            })()
-          )}
+                </div>
+              </div>
+            ) : null;
+          })()}
         </div>
 
-
         {/* interior DETAILS  */}
-
         <div>
-
-          <p className="text-xl font-semibold">Interior Details</p>
-          {/* <div className="ml-3">
-            <div className="mt-3 mb-3"></div>
-            <div>
-              <p className="text-sm mb-3">Heating or cooling</p>
-              {property?.property_details?.interior &&
-                property?.property_details?.interior.heating_and_cooling.length > 0 ? (
-                <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3 list-disc pl-5">
-                  {property?.property_details?.interior.heating_and_cooling.map(
-                    (
-                      feature:
-                        | string
-                        | number
-                        | bigint
-                        | boolean
-                        | React.ReactElement<
-                          unknown,
-                          string | React.JSXElementConstructor<any>
-                        >
-                        | Iterable<React.ReactNode>
-                        | React.ReactPortal
-                        | Promise<
-                          | string
-                          | number
-                          | bigint
-                          | boolean
-                          | React.ReactPortal
-                          | React.ReactElement<
-                            unknown,
-                            string | React.JSXElementConstructor<any>
-                          >
-                          | Iterable<React.ReactNode>
-                          | null
-                          | undefined
-                        >
-                        | null
-                        | undefined,
-                      index: React.Key | null | undefined,
-                    ) => (
-                      <li key={index} className="text-xs font-normal text-card">
-                        {feature}
-                      </li>
-                    ),
-                  )}
-                </ul>
-              ) : (
-                <p className="text-xs font-normal text-card">
-                  Not  available
-                </p>
-              )}
-            </div>
-
-            <div className="mt-3">
-              <p className="text-sm mb-3">kitchen Appliances</p>
-              {property?.property_details?.interior &&
-                property?.property_details?.interior.kitchen_appliances.length > 0 ? (
-                <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3 list-disc pl-5">
-                  {property?.property_details?.interior.kitchen_appliances.map(
-                    (
-                      feature:
-                        | string
-                        | number
-                        | bigint
-                        | boolean
-                        | React.ReactElement<
-                          unknown,
-                          string | React.JSXElementConstructor<any>
-                        >
-                        | Iterable<React.ReactNode>
-                        | React.ReactPortal
-                        | Promise<
-                          | string
-                          | number
-                          | bigint
-                          | boolean
-                          | React.ReactPortal
-                          | React.ReactElement<
-                            unknown,
-                            string | React.JSXElementConstructor<any>
-                          >
-                          | Iterable<React.ReactNode>
-                          | null
-                          | undefined
-                        >
-                        | null
-                        | undefined,
-                      index: React.Key | null | undefined,
-                    ) => (
-                      <li key={index} className="text-xs font-normal text-card">
-                        {feature}
-                      </li>
-                    ),
-                  )}
-                </ul>
-              ) : (
-                <p className="text-xs font-normal text-card">
-                  Not  available
-                </p>
-              )}
-            </div>
-            <div className="mt-3">
-              <p className="text-sm mb-3">Laundry features</p>
-              {property?.property_details?.interior &&
-                property?.property_details?.interior.laundry_features.length > 0 ? (
-                <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3 list-disc pl-5">
-                  {property?.property_details?.interior.laundry_features.map(
-                    (
-                      feature:
-                        | string
-                        | number
-                        | bigint
-                        | boolean
-                        | React.ReactElement<
-                          unknown,
-                          string | React.JSXElementConstructor<any>
-                        >
-                        | Iterable<React.ReactNode>
-                        | React.ReactPortal
-                        | Promise<
-                          | string
-                          | number
-                          | bigint
-                          | boolean
-                          | React.ReactPortal
-                          | React.ReactElement<
-                            unknown,
-                            string | React.JSXElementConstructor<any>
-                          >
-                          | Iterable<React.ReactNode>
-                          | null
-                          | undefined
-                        >
-                        | null
-                        | undefined,
-                      index: React.Key | null | undefined,
-                    ) => (
-                      <li key={index} className="text-xs font-normal text-card">
-                        {feature}
-                      </li>
-                    ),
-                  )}
-                </ul>
-              ) : (
-                <p className="text-xs font-normal text-card">
-                  Not  available
-                </p>
-              )}
-            </div>
-
-          </div> */}
-
-          {/* <div className="ml-3">
-            {property?.property_details?.interior &&
-              Object.entries(property.property_details.interior)
-                .filter(([key, value]) => Array.isArray(value) && key !== "_id")
-                .map(([key, features]) => (
-                  <div key={key} className="mt-3">
-                    <p className="text-sm mb-3 capitalize">
-                      {key.replace(/_/g, " ")}
-                    </p>
-
-                    {Array.isArray(features) && features.length > 0 ? (
-                      <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3 list-disc pl-5">
-                        {features.map((feature, index) => (
-                          <li key={index} className="text-xs font-normal text-card">
-                            {String(feature)}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-xs font-normal text-card">Not available</p>
-                    )}
-                  </div>
-                ))}
-          </div> */}
-
-          <div className="ml-3 space-y-4">
-            <div className="grid gap-6">
-              {visibleDetails.map(([key, features]:any) => (
-                <div key={key}>
-                  <p className="text-sm font-semibold mb-2 capitalize text-foreground">
+          <p className="text-sm font-bold text-slate-900 mb-2.5">Interior Details</p>
+          <div className="space-y-3">
+            <div className="grid gap-3">
+              {visibleDetails.map(([key, features]: any) => (
+                <div key={key} className="bg-slate-50/60 p-2.5 rounded-xl border border-slate-100">
+                  <p className="text-xs font-bold mb-1.5 capitalize text-slate-800">
                     {key.replace(/_/g, " ")}
                   </p>
                   {features.length > 0 ? (
-                    <ul className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 list-disc pl-5">
-                      {features.map((feature:any, index:any) => (
-                        <li key={index} className="text-xs font-normal text-muted-foreground">
+                    <div className="flex flex-wrap gap-1.5">
+                      {features.map((feature: any, index: any) => (
+                        <span key={index} className="inline-flex items-center text-[11px] font-medium bg-white text-slate-600 px-2 py-0.5 rounded-md border border-slate-200/70">
                           {String(feature)}
-                        </li>
+                        </span>
                       ))}
-                    </ul>
+                    </div>
                   ) : (
-                    <p className="text-xs italic text-muted-foreground">Not available</p>
+                    <p className="text-[11px] italic text-slate-400">Not available</p>
                   )}
                 </div>
               ))}
             </div>
 
             {details.length > 3 && (
-              <div className="pt-2 border-t border-dashed">
+              <div className="pt-1">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="text-primary hover:text-primary/80 p-0 h-auto font-medium flex items-center gap-1"
+                  className="text-blue-600 hover:text-blue-700 p-0 h-auto font-medium text-xs flex items-center gap-1"
                 >
                   {isExpanded ? (
-                    <>Show less <ChevronUp className="w-4 h-4" /></>
+                    <>Show less <ChevronUp className="w-3.5 h-3.5" /></>
                   ) : (
-                    <>View {details.length - 3} more interior details <ChevronDown className="w-4 h-4" /></>
+                    <>View {details.length - 3} more interior details <ChevronDown className="w-3.5 h-3.5" /></>
                   )}
                 </Button>
               </div>
             )}
           </div>
-
-
         </div>
-
-        {/* additional_information */}
 
         {/* FULL RENT DETAILS  */}
         <div>
-          <p className="text-xl font-semibold">Full Rent Details</p>
-          <div className="mt-4 mb-6">{/* <GoogleMapComponent /> */}</div>
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-0">
-              <div className="grid grid-cols-3">
-                <p className="text-xs font-normal text-card">Rent Price</p>
-                <p className="text-xs font-semibold text-primary">
-                  {property?.property_details?.rent_details?.weekly_rent_price || ""}/ Week
-                </p>
-              </div>
-              <div className="grid grid-cols-3">
-                <p className="text-xs font-normal text-card">Available date</p>
-                <p className="text-xs font-semibold text-primary">
-                  {formatDate(property?.property_details?.rent_details?.available_from) || ""}
-                </p>
-              </div>
+          <p className="text-sm font-bold text-slate-900 mb-2.5">Full Rent Details</p>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-100">
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block">Weekly Rent</span>
+              <span className="text-xs font-bold text-blue-600 block mt-0.5">
+                ${property?.property_details?.rent_details?.weekly_rent_price || 0} / week
+              </span>
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-0">
-              <div className="grid grid-cols-3">
-                <p className="text-xs font-normal text-card">Lease Terms</p>
-                <p className="text-xs font-semibold text-primary">
-                  {property?.property_details?.rent_details?.rent_details_lease_terms || ""} months
-                </p>
-              </div>
-              <div className="grid grid-cols-3">
-                <p className="text-xs font-normal text-card">Security deposit</p>
-                <p className="text-xs font-semibold text-primary">
-                  $: {property?.property_details?.rent_details?.bond_or_security_deposit || ""}
-                </p>
-              </div>
+            <div className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-100">
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block">Available Date</span>
+              <span className="text-xs font-semibold text-slate-800 block mt-0.5">
+                {formatDate(property?.property_details?.rent_details?.available_from) || "Immediate"}
+              </span>
             </div>
-
+            <div className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-100">
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block">Lease Terms</span>
+              <span className="text-xs font-semibold text-slate-800 block mt-0.5">
+                {property?.property_details?.rent_details?.rent_details_lease_terms ? `${property.property_details.rent_details.rent_details_lease_terms} months` : "Flexible"}
+              </span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-100">
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block">Security Deposit</span>
+              <span className="text-xs font-semibold text-slate-800 block mt-0.5">
+                ${property?.property_details?.rent_details?.bond_or_security_deposit || 0}
+              </span>
+            </div>
           </div>
         </div>
 
-
         {/* VIDEOS AND FILES  */}
-        {
-          property?.property_details?.documents?.videos.length > 0 ? (
-            <div className="">
-              <p className="text-xl font-semibold mb-3">Videos</p>
-
-              <div className={`grid grid-cols-1 gap-4 md:gap-6 mb-7`}>
-                <Slider {...settings}>
-                  {property?.property_details?.documents?.videos.map(
-                    (property: any) => (
-                      <div key={property?._id} className="px-2">
-                        <Card
-                          key={property?._id}
-                          className="bg-white rounded-2xl overflow-hidden shadow-sm"
-                        >
-                          <div className="relative">
-                            <video
-                              // key={index}
-                              // ref={videoRef}
-                              src={property?.url}
-                              controls
-                              playsInline
-                              preload="metadata"
-                              className="h-full w-full object-contain"
-                            />
-                          </div>
-                        </Card>
-                      </div>
-                    ),
-                  )}
-                </Slider>
-              </div>
+        {property?.property_details?.documents?.videos?.length > 0 && (
+          <div>
+            <p className="text-sm font-bold text-slate-900 mb-2.5">Videos</p>
+            <div className="rounded-2xl overflow-hidden border border-slate-100">
+              <Slider {...settings}>
+                {property?.property_details?.documents?.videos.map((vid: any, idx: number) => (
+                  <div key={vid?._id || idx} className="outline-none">
+                    <video
+                      src={vid?.url}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      className="w-full h-[220px] object-cover bg-black"
+                    />
+                  </div>
+                ))}
+              </Slider>
             </div>
-          ) : null
-        }
+          </div>
+        )}
 
-
-
-
-
-        {property?.property_details?.documents?.floor_plans.length > 0 ?
-          (
-            <div className="">
-              <p className="text-xl font-semibold mb-3">Floor Plans</p>
-
-              <div className={`grid grid-cols-1 gap-4 md:gap-6 mb-7`}>
-                <Slider {...settings}>
-                  {property?.property_details?.documents?.floor_plans.map(
-                    (property: any, index: number) => (
-                      <div key={property?._id} className="px-2">
-                        <Card
-                          key={property?._id}
-                          className="bg-white rounded-2xl overflow-hidden shadow-sm"
-                        >
-                          <div className="relative">
-                            <a
-                              href={property?.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block cursor-pointer"
-                            >
-                              <p className="text-blue-600 hover:underline p-4 text-center">
-                                View Floor Plan {index + 1}
-                              </p>
-                            </a>
-                          </div>
-                        </Card>
-                      </div>
-                    ),
-                  )}
-                </Slider>
-              </div>
+        {property?.property_details?.documents?.floor_plans?.length > 0 && (
+          <div>
+            <p className="text-sm font-bold text-slate-900 mb-2.5">Floor Plans</p>
+            <div className="flex flex-wrap gap-2">
+              {property?.property_details?.documents?.floor_plans.map((fp: any, index: number) => (
+                <a
+                  key={fp?._id || index}
+                  href={fp?.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors"
+                >
+                  View Floor Plan {index + 1}
+                </a>
+              ))}
             </div>
-          )
-          : null}
+          </div>
+        )}
 
         {/* <div>
                         <p className="text-xl font-semibold mb-3">What's Nearby?</p>

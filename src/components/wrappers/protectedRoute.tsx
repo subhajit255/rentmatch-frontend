@@ -1,10 +1,13 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { ProtectedRouteProps } from '../../types/memberTypes';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 const SUBSCRIPTION_EXEMPT_ROUTES = [
   "/pricing-and-plans",
+  "/checkout",
+  "/payment-success",
+  "/subscriptions",
   "/logout",
   "/profile",
 ];
@@ -17,7 +20,7 @@ interface Permission {
 }
 
 export default function ProtectedRoute({ allowedRoles }: { allowedRoles?: ProtectedRouteProps[] }) {
-
+  const location = useLocation();
   const { user, token, loading } = useAuth();
 
   // console.log(user?.role, "_____Protectedroute wrap_______");
