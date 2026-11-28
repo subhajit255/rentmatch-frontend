@@ -12,8 +12,9 @@ import "slick-carousel/slick/slick-theme.css";
 import { Card } from "../../ui/card";
 import ToggleButton from "../ToggleButton";
 import Icon from "../../icons/icon";
+import { FormatArea } from "../../common/FormatArea";
 import GoogleMapComponent from "../GoogleMapComponent";
-import { ChevronDown, ChevronUp, EllipsisVertical } from "lucide-react";
+import { ChevronDown, ChevronUp, EllipsisVertical, Car } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   acceptRejectPropertyRequestApi,
@@ -566,10 +567,10 @@ const PropertySheet: React.FC<PostProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
-            <img src={IMAGES.sqm} alt="" className="w-3.5 h-3.5 object-contain" />
-            <span className="text-xs font-medium text-slate-500">Area:</span>
+            <Car className="w-3.5 h-3.5 text-slate-600" />
+            <span className="text-xs font-medium text-slate-500">Parking:</span>
             <span className="text-xs font-bold text-slate-900">
-              {property?.property_details?.features?.floor_area || 0} sqm
+              {property?.property_details?.features?.parking || property?.property_details?.features?.no_of_garage || 0}
             </span>
           </div>
         </div>
@@ -754,8 +755,8 @@ const PropertySheet: React.FC<PostProps> = ({
               { icon: "Garage", label: "Garages", value: property?.property_details?.features?.no_of_garage ?? 0 },
               { icon: "Bedroom", label: "Bedrooms", value: property?.property_details?.features?.no_of_bedrooms ?? 0 },
               { icon: "Bathroom", label: "Bathrooms", value: property?.property_details?.features?.no_of_bathrooms ?? 0 },
-              { icon: "LandSize", label: "Land Size", value: property?.property_details?.features?.land_size ? `${property.property_details.features.land_size} sqm` : "N/A" },
-              { icon: "MeterScale", label: "Size", value: property?.property_details?.features?.floor_area ? `${property.property_details.features.floor_area} sqm` : "N/A" },
+              { icon: "LandSize", label: "Land Size", value: property?.property_details?.features?.land_size ? <FormatArea value={property.property_details.features.land_size} /> : "N/A" },
+              { icon: "MeterScale", label: "Size", value: property?.property_details?.features?.floor_area ? <FormatArea value={property.property_details.features.floor_area} /> : "N/A" },
             ].map((item, idx) => (
               <div
                 key={idx}

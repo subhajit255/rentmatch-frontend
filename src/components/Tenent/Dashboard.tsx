@@ -8,11 +8,15 @@ import ToggleButton from "../ChildComponent/ToggleButton";
 import { useAuth } from "../../context/AuthContext";
 import { transmissionLowerCase } from "../../lib/utils";
 import { cn } from "../lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getDashboardData,
   getDashboardPropertyData,
 } from "../../actions/common";
+import {
+  acceptRejectPostRequestApi,
+  getTenantInvitationsApi,
+} from "../../actions/myPost";
 import { Link } from "react-router-dom";
 import { ChartBarMultiple } from "../cards/barCharts";
 import ProgressAnalysis from "../cards/progressAnalysis";
@@ -41,19 +45,19 @@ const Dashboard = () => {
   const [percentage, setPercentage] = useState<number>(75);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  // Landlord invitation state
-  const [showInvitationBanner, setShowInvitationBanner] = useState<boolean>(
-    () => {
-      try {
-        return localStorage.getItem("rm_dismissed_invite_banner") !== "true";
-      } catch {
-        return true;
-      }
-    },
-  );
+  // Landlord invitation state (dynamic from backend)
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [invitationAccepted, setInvitationAccepted] = useState(false);
+  const [acceptedLandlordName, setAcceptedLandlordName] = useState<string | null>(null);
+
+  const { data: invitationsData } = useQuery({
+    queryKey: ["tenant-invitations"],
+    queryFn: getTenantInvitationsApi,
+    enabled: user?.role === "TENANT",
+    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000,
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ["dash-kpi"],
@@ -230,29 +234,62 @@ const Dashboard = () => {
     button2Link = "/find-tenants";
   }
 
-  const invitationCount = Math.max(
-    1,
-    data?.data?.totalPropertyRequests || data?.data?.totalPostRequests || 1,
+  const invitations = Array.isArray(invitationsData?.result)
+    ? invitationsData.result
+    : [];
+  const pendingInvitations = invitations.filter(
+    (inv: any) => inv.status === "PENDING",
   );
+  const invitationCount = pendingInvitations.length;
 
-  const handleAcceptInvitation = () => {
-    setInvitationAccepted(true);
-    toast({
-      title: "Invitation Accepted!",
-      description:
-        "Your identity has been shared with Harbour Property. Chat is now available.",
-      variant: "success",
+  const { mutate: respondToInvitation, isPending: isResponding } = useMutation({
+    mutationFn: acceptRejectPostRequestApi,
+    onSuccess: (_res, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["tenant-invitations"] });
+      queryClient.invalidateQueries({ queryKey: ["dash-kpi"] });
+      if (variables.status === "APPROVED") {
+        toast({
+          title: "Invitation Accepted!",
+          description:
+            "Your identity has been shared with the landlord. You can now connect and message.",
+          variant: "success",
+        });
+      } else {
+        setAcceptedLandlordName(null);
+        toast({
+          title: "Invitation Declined",
+          description: "You have declined this landlord's connection invitation.",
+          variant: "default",
+        });
+      }
+    },
+    onError: () => {
+      setAcceptedLandlordName(null);
+      toast({
+        title: "Action Failed",
+        description: "Could not update invitation status. Please try again.",
+        variant: "error",
+      });
+    },
+  });
+
+  const handleAcceptInvitation = (inv: any) => {
+    const landlord = inv?.requested_by;
+    const landlordName =
+      landlord?.company_details?.company_name ||
+      `${landlord?.first_name || ""} ${landlord?.last_name || ""}`.trim() ||
+      "the landlord";
+    setAcceptedLandlordName(landlordName);
+    respondToInvitation({
+      request_post_id: inv._id,
+      status: "APPROVED",
     });
   };
 
-  const handleDeclineInvitation = () => {
-    setShowInvitationBanner(false);
-    localStorage.setItem("rm_dismissed_invite_banner", "true");
-    setReviewModalOpen(false);
-    toast({
-      title: "Invitation Declined",
-      description: "You have declined this landlord's connection invitation.",
-      variant: "default",
+  const handleDeclineInvitation = (inv: any) => {
+    respondToInvitation({
+      request_post_id: inv._id,
+      status: "REJECTED",
     });
   };
 
@@ -260,7 +297,7 @@ const Dashboard = () => {
     <>
       <div className="flex flex-col gap-6 common-container pb-8">
         {/* Landlord Invitation Notification Banner */}
-        {user?.role === "TENANT" && showInvitationBanner && (
+        {user?.role === "TENANT" && invitationCount > 0 && (
           <div className="w-full bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative overflow-hidden">
             {/* Green vertical bar on the left */}
             <div className="absolute left-0 top-0 bottom-0 w-2 bg-[#10b981] rounded-l-2xl" />
@@ -279,7 +316,10 @@ const Dashboard = () => {
             <div className="flex items-center gap-3 shrink-0 pl-3 sm:pl-0">
               <button
                 type="button"
-                onClick={() => setReviewModalOpen(true)}
+                onClick={() => {
+                  setAcceptedLandlordName(null);
+                  setReviewModalOpen(true);
+                }}
                 className="inline-flex items-center justify-center bg-[#2838a3] hover:bg-[#1e2c88] active:scale-98 text-white font-semibold text-sm px-6 py-2.5 rounded-full shadow-sm transition-all whitespace-nowrap cursor-pointer"
               >
                 Review invitations
@@ -450,14 +490,14 @@ const Dashboard = () => {
             propertyTypeCounts={propertyWithCount?.result || []}
           />
         ) : null}
-        <PropertyListing />
+        {/* <PropertyListing /> */}
       </div>
 
       {/* Review Invitations Modal */}
       <Dialog.Root open={reviewModalOpen} onOpenChange={setReviewModalOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 animate-in fade-in duration-200" />
-          <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full max-w-lg bg-white p-6 rounded-3xl shadow-2xl z-50 border border-slate-100">
+          <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white p-6 rounded-3xl shadow-2xl z-50 border border-slate-100">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2.5">
@@ -466,10 +506,10 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <Dialog.Title className="text-base font-bold text-gray-900 leading-tight">
-                    Landlord Invitation
+                    Landlord {invitationCount > 1 ? `Invitations (${invitationCount})` : "Invitation"}
                   </Dialog.Title>
                   <p className="text-xs text-emerald-700 font-medium">
-                    Identity Protected (Renter RM-4812)
+                    Identity Protected ({(user as any)?.user_name || user?.member_id || "Renter"})
                   </p>
                 </div>
               </div>
@@ -481,108 +521,34 @@ const Dashboard = () => {
             </div>
 
             {/* Content Body */}
-            {!invitationAccepted ? (
-              <div className="py-4 space-y-4">
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  A landlord has reviewed your preferences and invited you to
-                  connect. Your real name and contact details remain hidden
-                  until you choose to accept.
-                </p>
-
-                {/* Landlord & Property Box */}
-                <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-sm">
-                        HP
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-sm text-gray-900 leading-snug">
-                          Harbour Property
-                        </h4>
-                        <span className="text-xs text-gray-500">
-                          Verified Landlord
-                        </span>
-                      </div>
-                    </div>
-                    <span
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openMatchingPreferencesModal();
-                      }}
-                      className="text-xs font-semibold text-emerald-700 bg-emerald-100/70 hover:bg-emerald-200/80 transition-colors cursor-pointer px-2.5 py-1 rounded-full shadow-2xs hover:underline"
-                      title="Click to view or adjust your matching preferences"
-                    >
-                      92% match
-                    </span>
-                  </div>
-
-                  <div className="bg-white rounded-xl p-3 border border-slate-100 flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-bold text-gray-900">
-                        Newtown apartment / Victoria
-                      </p>
-                      <p className="text-[11px] text-gray-500 mt-0.5">
-                        4 Beds · 2 Baths · Parking included
-                      </p>
-                    </div>
-                    <span className="font-bold text-sm text-blue-600">
-                      $100 / week
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-gray-600 italic bg-white/70 p-2.5 rounded-lg border border-slate-100">
-                    "Hi! We have a property matching your requirements and would
-                    love to invite you for an inspection and chat."
-                  </p>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="pt-2 flex items-center justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={handleDeclineInvitation}
-                    className="px-4 py-2 text-xs font-semibold text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    Decline
-                  </button>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setReviewModalOpen(false);
-                        navigate("/my-posts");
-                      }}
-                      className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
-                    >
-                      View in My Posts
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleAcceptInvitation}
-                      className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full shadow-sm transition-colors"
-                    >
-                      Accept & Connect
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
+            {acceptedLandlordName ? (
               <div className="py-6 text-center space-y-3">
                 <CheckCircle2 className="w-12 h-12 mx-auto text-emerald-500" />
                 <h4 className="text-base font-bold text-gray-900">
                   Invitation Accepted!
                 </h4>
                 <p className="text-xs text-gray-500 max-w-xs mx-auto">
-                  Your identity has now been shared with Harbour Property. You
-                  can now chat directly to schedule an inspection.
+                  Your identity has now been shared with{" "}
+                  <span className="font-semibold text-gray-800">
+                    {acceptedLandlordName}
+                  </span>
+                  . You can now chat directly to schedule an inspection.
                 </p>
                 <div className="pt-3 flex justify-center gap-3">
+                  {pendingInvitations.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setAcceptedLandlordName(null)}
+                      className="px-5 py-2.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full transition-all"
+                    >
+                      Review Next ({pendingInvitations.length})
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
                       setReviewModalOpen(false);
+                      setAcceptedLandlordName(null);
                       navigate("/message");
                     }}
                     className="px-6 py-2.5 text-xs font-bold text-white bg-[#2838a3] hover:bg-[#1e2c88] rounded-full shadow-sm transition-all"
@@ -590,6 +556,146 @@ const Dashboard = () => {
                     Go to Messages
                   </button>
                 </div>
+              </div>
+            ) : pendingInvitations.length === 0 ? (
+              <div className="py-8 text-center space-y-2">
+                <p className="text-sm font-semibold text-slate-700">
+                  No pending invitations
+                </p>
+                <p className="text-xs text-slate-500">
+                  You have reviewed all landlord invitations.
+                </p>
+              </div>
+            ) : (
+              <div className="py-4 space-y-4">
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  A landlord has reviewed your preferences and invited you to
+                  connect. Your real name and contact details remain hidden
+                  until you choose to accept.
+                </p>
+
+                {pendingInvitations.map((inv: any) => {
+                  const landlord = inv?.requested_by || {};
+                  const landlordName =
+                    landlord?.company_details?.company_name ||
+                    `${landlord?.first_name || ""} ${landlord?.last_name || ""}`.trim() ||
+                    "Verified Landlord";
+                  const initials = landlordName
+                    .split(" ")
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((w: string) => w[0]?.toUpperCase())
+                    .join("") || "LL";
+                  const roleLabel =
+                    landlord?.role === "PROPERTY MANAGER"
+                      ? "Verified Property Manager"
+                      : "Verified Landlord";
+                  const invitedProp = inv?.properties?.[0]?.property_object_id;
+                  const propBasic = invitedProp?.property_details?.basic;
+                  const propFeatures = invitedProp?.property_details?.features;
+                  const propRent = invitedProp?.property_details?.rent_details;
+                  const postInfo = inv?.property_post_object_id;
+
+                  return (
+                    <div
+                      key={inv._id}
+                      className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 space-y-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-sm shrink-0">
+                            {initials}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-sm text-gray-900 leading-snug">
+                              {landlordName}
+                            </h4>
+                            <span className="text-xs text-gray-500">
+                              {roleLabel}
+                            </span>
+                          </div>
+                        </div>
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openMatchingPreferencesModal();
+                          }}
+                          className="text-xs font-semibold text-emerald-700 bg-emerald-100/70 hover:bg-emerald-200/80 transition-colors cursor-pointer px-2.5 py-1 rounded-full shadow-2xs hover:underline"
+                          title="Click to view or adjust your matching preferences"
+                        >
+                          Preferences
+                        </span>
+                      </div>
+
+                      {invitedProp ? (
+                        <div className="bg-white rounded-xl p-3 border border-slate-100 flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-gray-900 truncate">
+                              {propBasic?.property_name || "Rental Property"}
+                            </p>
+                            <p className="text-[11px] text-gray-500 mt-0.5 truncate">
+                              {propFeatures?.no_of_bedrooms || 0} Beds ·{" "}
+                              {propFeatures?.no_of_bathrooms || 0} Baths ·{" "}
+                              {propFeatures?.parking || propFeatures?.no_of_garage || 0} Parking
+                            </p>
+                          </div>
+                          <span className="font-bold text-sm text-blue-600 shrink-0">
+                            ${propRent?.weekly_rent_price || 0} / week
+                          </span>
+                        </div>
+                      ) : postInfo ? (
+                        <div className="bg-white rounded-xl p-3 border border-slate-100">
+                          <p className="text-xs font-bold text-gray-900">
+                            Regarding: {postInfo?.subject || "Your Rental Post"}
+                          </p>
+                          <p className="text-[11px] text-gray-500 mt-0.5">
+                            {postInfo?.rentalCityPreference || postInfo?.location || ""}
+                          </p>
+                        </div>
+                      ) : null}
+
+                      <p className="text-xs text-gray-600 italic bg-white/70 p-2.5 rounded-lg border border-slate-100">
+                        "
+                        {inv?.details?.trim() ||
+                          "Hi! We have a property matching your requirements and would love to invite you for an inspection and chat."}
+                        "
+                      </p>
+
+                      {/* Action Buttons */}
+                      <div className="pt-1 flex items-center justify-between gap-3">
+                        <button
+                          type="button"
+                          disabled={isResponding}
+                          onClick={() => handleDeclineInvitation(inv)}
+                          className="px-4 py-2 text-xs font-semibold text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
+                        >
+                          Decline
+                        </button>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReviewModalOpen(false);
+                              navigate("/my-posts");
+                            }}
+                            className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
+                          >
+                            View in My Posts
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isResponding}
+                            onClick={() => handleAcceptInvitation(inv)}
+                            className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full shadow-sm transition-colors disabled:opacity-50"
+                          >
+                            Accept & Connect
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </Dialog.Content>

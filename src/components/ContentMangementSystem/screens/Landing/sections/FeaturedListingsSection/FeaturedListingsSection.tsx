@@ -159,25 +159,51 @@ const FeaturedListingsSection = () => {
               className={`grid grid-cols-1 gap-4 md:gap-6 mb-8 md:mb-[52px] ${inView ? "animate__animated animate__slideInUp" : ""}`}
             >
               <Slider {...settings}>
-                {data?.result?.map(
-                  (property: PropertyResult) => (
-                    <div key={property._id} className="px-2">
-                      <Property
-                        id={property?.property_id || 0}
-                        image={IMAGES.villa_image}
-                        type={property.property_details?.basic?.property_type_id?.name || "House"}
-                        status={"For Rent"}
-                        location={property.property_details?.basic?.full_address || "Califonia, New York"}
-                        title={property.property_details?.basic?.property_name || "Not Available"}
-                        beds={Number(property.property_details?.features?.no_of_bedrooms) || 0}
-                        baths={Number(property.property_details?.features?.no_of_bathrooms) || 0}
-                        sqm={property.property_details?.features?.land_size || 0}
-                        postedDate={property.property_details?.rent_details?.available_from || new Date()}
-                        price={property.property_details?.rent_details?.weekly_rent_price || "000,00"}
-                      />
-                    </div>
-                  ),
-                )}
+                {data?.result?.map((property: PropertyResult) => (
+                  <div key={property._id} className="px-2">
+                    <Property
+                      id={property?.property_id || 0}
+                      image={IMAGES.villa_image}
+                      type={
+                        property.property_details?.basic?.property_type_id
+                          ?.name || "House"
+                      }
+                      status={"For Rent"}
+                      location={
+                        property.property_details?.basic?.full_address ||
+                        "Califonia, New York"
+                      }
+                      title={
+                        property.property_details?.basic?.property_name ||
+                        "Not Available"
+                      }
+                      beds={
+                        Number(
+                          property.property_details?.features?.no_of_bedrooms,
+                        ) || 0
+                      }
+                      baths={
+                        Number(
+                          property.property_details?.features?.no_of_bathrooms,
+                        ) || 0
+                      }
+                      sqm={property.property_details?.features?.land_size || 0}
+                      parking={
+                        property.property_details?.features?.parking ||
+                        property.property_details?.features?.no_of_garage ||
+                        0
+                      }
+                      postedDate={
+                        property.property_details?.rent_details
+                          ?.available_from || new Date()
+                      }
+                      price={
+                        property.property_details?.rent_details
+                          ?.weekly_rent_price || "000,00"
+                      }
+                    />
+                  </div>
+                ))}
               </Slider>
             </div>
           </div>

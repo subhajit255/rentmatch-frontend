@@ -1,6 +1,6 @@
 import api from ".";
 import { subscriptionform } from "../types/admin";
-import { OWNER_SUBSCRIPTION_PLAN_GET_URL, SUBSCRIPTION_PLAN_ADD_URL, SUBSCRIPTION_PLAN_EDIT_URL, SUBSCRIPTION_PLAN_GET_URL, SUBSCRIPTION_PLAN_STATUS_CHANGE_URL, SUBSCRIPTION_PLAN_URL, VERIFY_SUBSCRIPTION_PLAN_URL } from "./constant";
+import { CANCEL_SUBSCRIPTION_URL, OWNER_SUBSCRIPTION_PLAN_GET_URL, SUBSCRIPTION_HISTORY_URL, SUBSCRIPTION_PLAN_ADD_URL, SUBSCRIPTION_PLAN_EDIT_URL, SUBSCRIPTION_PLAN_GET_URL, SUBSCRIPTION_PLAN_STATUS_CHANGE_URL, SUBSCRIPTION_PLAN_URL, VERIFY_SUBSCRIPTION_PLAN_URL } from "./constant";
 
 export const getSubscriptionPlanList = async (role: string = "", params: { search?: string } = {}) => {
   const res = await api.get(SUBSCRIPTION_PLAN_GET_URL + role, { params: params });
@@ -52,3 +52,13 @@ export const verifySubscriptionPlanApi = async (payload: {member_objectId: strin
     return { success: false, message: "Failed to verify subscription plan" };
   }
 }
+
+export const cancelMemberSubscriptionApi = async () => {
+  const res = await api.patch(CANCEL_SUBSCRIPTION_URL);
+  return res.data;
+};
+
+export const getMemberSubscriptionHistoryApi = async () => {
+  const res = await api.get(SUBSCRIPTION_HISTORY_URL);
+  return res.data;
+};

@@ -43,6 +43,8 @@ export const POST_LIST_URL: string = '/post/list/'
 export const POST_DETAILS_URL: string = '/post/details'
 export const POST_REQUEST_SEND_URL: string = '/post/send-request'
 export const POST_RECEIVE_REQUEST_URL: string = '/post/recived-request'
+export const POST_ACCEPT_REJECT_REQUEST_URL: string = '/post/accept-reject-send-request'
+export const POST_TENANT_INVITATIONS_URL: string = '/post/tenant-invitations'
 
 export const EXPLOER_PROPERTY: string = '/property/exploer'
 
@@ -62,6 +64,8 @@ export const MEMBER_PROPERTIES_URL : string = "user-managment/member-property-li
 export const TENANT_REQUEST_PROPERTY_WISE_URL: string = 'property/property-wise-request'
 
 export const PAYMENT_URL: string = 'subcription/member-subscribe'
+export const CANCEL_SUBSCRIPTION_URL: string = 'subcription/cancel-subscribe'
+export const SUBSCRIPTION_HISTORY_URL: string = 'subcription/history'
 
 
 

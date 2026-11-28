@@ -1,13 +1,15 @@
-import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
 import { Search, Heart, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getAllPropertyCMS } from "../../../../actions/property";
 import { PropertyResult } from "../../../../types/property";
-import {
-  GoogleMap,
-  MarkerF,
-  InfoWindowF,
-} from "@react-google-maps/api";
+import { GoogleMap, MarkerF, InfoWindowF } from "@react-google-maps/api";
 import { useGoogleMaps } from "../../../../context/GoogleMapsProvider";
 
 /* ─────────────────────────────────────────────
@@ -29,8 +31,8 @@ interface Property {
   pets: boolean;
   tags: string[];
   img: string;
-  lat?: number;   // from backend basic.latitude
-  lng?: number;   // from backend basic.longitude
+  lat?: number; // from backend basic.latitude
+  lng?: number; // from backend basic.longitude
   available_from?: string;
 }
 
@@ -58,7 +60,7 @@ const mapApiProperty = (raw: PropertyResult): Property => {
     if (availDate <= now) tags.push("Available now");
     else
       tags.push(
-        `Available ${availDate.toLocaleDateString("en-AU", { day: "numeric", month: "short" })}`
+        `Available ${availDate.toLocaleDateString("en-AU", { day: "numeric", month: "short" })}`,
       );
   }
   if (rent?.rent_details_lease_terms)
@@ -171,7 +173,9 @@ const PASTEL_BG = [
 const PropertyCard = ({ p }: { p: Property }) => {
   const [saved, setSaved] = useState(false);
   const availTag = p.tags.find((t) => t.toLowerCase().includes("available"));
-  const otherTags = p.tags.filter((t) => !t.toLowerCase().includes("available"));
+  const otherTags = p.tags.filter(
+    (t) => !t.toLowerCase().includes("available"),
+  );
 
   return (
     <article className="bg-white rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col justify-between group">
@@ -285,8 +289,7 @@ const PropertyCard = ({ p }: { p: Property }) => {
 /* ─────────────────────────────────────────────
    GOOGLE MAP VIEW
 ───────────────────────────────────────────── */
-const GOOGLE_MAP_KEY =
-  process.env.REACT_APP_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+const GOOGLE_MAP_KEY = process.env.REACT_APP_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 
 /* Default center: Australia */
 const AUS_CENTER = { lat: -25.2744, lng: 133.7751 };
@@ -294,10 +297,26 @@ const AUS_CENTER = { lat: -25.2744, lng: 133.7751 };
 const MAP_STYLES: google.maps.MapTypeStyle[] = [
   { elementType: "geometry", stylers: [{ color: "#f5f5f0" }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#4a5568" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#bde0f4" }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
-  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#dde5e2" }] },
-  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#d4edda" }] },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#bde0f4" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#ffffff" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#dde5e2" }],
+  },
+  {
+    featureType: "poi.park",
+    elementType: "geometry",
+    stylers: [{ color: "#d4edda" }],
+  },
 ];
 
 const MapView = ({ properties }: { properties: Property[] }) => {
@@ -310,7 +329,7 @@ const MapView = ({ properties }: { properties: Property[] }) => {
   /* Properties that have coordinates from the backend */
   const pinned = useMemo(
     () => properties.filter((p) => p.lat && p.lng),
-    [properties]
+    [properties],
   );
 
   /* Compute map center: average of pinned coords, or AUS default */
@@ -378,7 +397,8 @@ const MapView = ({ properties }: { properties: Property[] }) => {
         <span style={{ fontSize: 28 }}>⚠️</span>
         <strong>Map could not load</strong>
         <p style={{ fontSize: 13, color: MUTED, margin: 0 }}>
-          {loadError?.message ?? "REACT_APP_PUBLIC_GOOGLE_MAPS_API_KEY is not set."}
+          {loadError?.message ??
+            "REACT_APP_PUBLIC_GOOGLE_MAPS_API_KEY is not set."}
         </p>
       </div>
     );
@@ -452,7 +472,14 @@ const MapView = ({ properties }: { properties: Property[] }) => {
                   >
                     {prop.title}
                   </strong>
-                  <span style={{ fontSize: 11, color: MUTED, display: "block", marginBottom: 6 }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: MUTED,
+                      display: "block",
+                      marginBottom: 6,
+                    }}
+                  >
                     ⦿ {prop.location}
                   </span>
                   <span
@@ -513,7 +540,9 @@ const FindProperty = () => {
   const [maxRent, setMaxRent] = useState(1500); // 1500 means Any / No max
   const [minBeds, setMinBeds] = useState<number>(0); // 0 = Any, 1 = 1+, 2 = 2+, 3 = 3+, 4 = 4+
   const [moveInDate, setMoveInDate] = useState("");
-  const [selectedAccessibility, setSelectedAccessibility] = useState<string[]>([]);
+  const [selectedAccessibility, setSelectedAccessibility] = useState<string[]>(
+    [],
+  );
   const [showAccessibility, setShowAccessibility] = useState(false);
   const [sort, setSort] = useState<SortKey>("match");
   const [view, setView] = useState<ViewKey>("list");
@@ -567,30 +596,37 @@ const FindProperty = () => {
         else if (sort === "high") params.sort_by_price = "HTL";
 
         const res = await getAllPropertyCMS(params);
-        const raw: PropertyResult[] = res?.data ?? res?.result ?? res?.properties ?? [];
-        const totalCount: number = res?.pagination?.total_records ?? res?.total ?? res?.totalCount ?? raw.length;
+        const raw: PropertyResult[] =
+          res?.data ?? res?.result ?? res?.properties ?? [];
+        const totalCount: number =
+          res?.pagination?.total_records ??
+          res?.total ??
+          res?.totalCount ??
+          raw.length;
         setProperties(raw.map(mapApiProperty));
         setTotal(totalCount);
         setPage(pg);
       } catch (err: any) {
         setError(
           err?.response?.data?.message ??
-          err?.message ??
-          "Failed to load properties. Please try again."
+            err?.message ??
+            "Failed to load properties. Please try again.",
         );
         setProperties([]);
       } finally {
         setLoading(false);
       }
     },
-    [search, maxRent, minBeds, sort]
+    [search, maxRent, minBeds, sort],
   );
 
   /* Debounced fetch on filter change */
   useEffect(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => fetchProperties(1), 400);
-    return () => { if (debounceTimer.current) clearTimeout(debounceTimer.current); };
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
   }, [fetchProperties]);
 
   /* ── Client-side filter + sort ── */
@@ -612,7 +648,7 @@ const FindProperty = () => {
       const matchAccessibility =
         selectedAccessibility.length === 0 ||
         selectedAccessibility.some((acc) =>
-          p.tags?.some((t) => t.toLowerCase().includes(acc.toLowerCase()))
+          p.tags?.some((t) => t.toLowerCase().includes(acc.toLowerCase())),
         );
 
       return matchBeds && matchRent && matchDate && matchAccessibility;
@@ -652,9 +688,6 @@ const FindProperty = () => {
         <h1 className="text-3xl sm:text-4xl font-extrabold text-[#1E3A8A] tracking-tight mb-2">
           Browse rentals
         </h1>
-        <p className="text-sm sm:text-base text-slate-500 mb-8">
-          Weekly rents in AUD, on Australian addresses only.
-        </p>
 
         {/* ── Filter Form Card (2 rows) ── */}
         <div className="bg-white rounded-2xl shadow-[0_4px_25px_rgba(0,0,0,0.05)] border border-slate-200/80 p-5 sm:p-6 mb-6">
@@ -805,7 +838,7 @@ const FindProperty = () => {
                               setSelectedAccessibility((prev) =>
                                 prev.includes(opt)
                                   ? prev.filter((o) => o !== opt)
-                                  : [...prev, opt]
+                                  : [...prev, opt],
                               )
                             }
                             className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 accent-[#0F7A4A]"
@@ -843,7 +876,8 @@ const FindProperty = () => {
         {/* ── Match Percentage Blue Banner ── */}
         <div className="bg-[#EFF6FF] border border-[#BFDBFE]/70 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <p className="text-xs sm:text-sm text-[#1E40AF] font-medium leading-relaxed">
-            See how well each home matches you. Match percentages appear after you sign in and publish a rental brief.
+            See how well each home matches you. Match percentages appear after
+            you sign in and publish a rental brief.
           </p>
           <a
             href="/login"

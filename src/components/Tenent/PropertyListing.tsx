@@ -1,13 +1,11 @@
-import {
-  ArrowRightIcon,
-} from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 import React from "react";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { Button } from "../ui/button";
 import Property from "../ChildComponent/Property";
 import { IMAGES } from "../../assets/index";
-import { useInView } from 'react-intersection-observer';
+import { useInView } from "react-intersection-observer";
 import Slider from "react-slick";
 import { useQuery } from "@tanstack/react-query";
 import { getProprtyFeatured } from "../../actions/cms/cmsPageApis";
@@ -57,21 +55,20 @@ const PropertyListing = () => {
   });
 
   const navigateDirection = () => {
-    if (user?.role === 'SUPER ADMIN' || user?.role === 'ADMIN') {
+    if (user?.role === "SUPER ADMIN" || user?.role === "ADMIN") {
       navigate(`/featured-properties`);
     } else {
       navigate(`/explore-properties`);
     }
   };
 
-
   return (
     <section className="w-full py-8 md:py-[2px] relative">
       {!isLoading &&
-        !isError &&
-        data &&
-        data?.result &&
-        data?.result.length > 0 ? (
+      !isError &&
+      data &&
+      data?.result &&
+      data?.result.length > 0 ? (
         <div className="max-w-[1733px] mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8 md:mb-[5px]">
             <div className="flex flex-col gap-1">
@@ -92,35 +89,65 @@ const PropertyListing = () => {
               <ArrowRightIcon className="w-6 h-6" />
             </Button>
           </div>
-          <div ref={ref} className={`grid grid-cols-1 gap-4 md:gap-6 mb-8 md:mb-[52px] ${inView ? 'animate__animated animate__slideInUp' : ''}`}>
+          <div
+            ref={ref}
+            className={`grid grid-cols-1 gap-4 md:gap-6 mb-8 md:mb-[52px] ${inView ? "animate__animated animate__slideInUp" : ""}`}
+          >
             <Slider {...settings}>
               {/* {propertyListings.map((property) => ( */}
               {/* // <div key={property.id} className="px-2"> */}
               {/* <Property id={property.id} image={property.image} type={property.type} status={property.status} location={property.location} title={property.title} beds={property.beds} baths={property.baths} sqm={property.sqm} postedDate={property.postedDate} price={property.price}/> */}
-              {data?.result?.map(
-                (property: any) => (
-                  <div key={property._id} className="px-2">
-                    <Property
-                      id={property?.property_id || 0}
-                      image={IMAGES.villa_image}
-                      type={property.property_details?.basic?.property_type_id?.name || "House"}
-                      status={"For Rent"}
-                      location={property.property_details?.basic?.full_address || "Califonia, New York"}
-                      title={property.property_details?.basic?.property_name || "Not Available"}
-                      beds={Number(property.property_details?.features?.no_of_bedrooms) || 0}
-                      baths={Number(property.property_details?.features?.no_of_bathrooms) || 0}
-                      sqm={property.property_details?.features?.land_size || 0}
-                      postedDate={property.property_details?.rent_details?.available_from || new Date()}
-                      price={property.property_details?.rent_details?.weekly_rent_price || "000,00"}
-                    />
-                  </div>
-                ),
-              )}
+              {data?.result?.map((property: any) => (
+                <div key={property._id} className="px-2">
+                  <Property
+                    id={property?.property_id || 0}
+                    image={IMAGES.villa_image}
+                    type={
+                      property.property_details?.basic?.property_type_id
+                        ?.name || "House"
+                    }
+                    status={"For Rent"}
+                    location={
+                      property.property_details?.basic?.full_address ||
+                      "Califonia, New York"
+                    }
+                    title={
+                      property.property_details?.basic?.property_name ||
+                      "Not Available"
+                    }
+                    beds={
+                      Number(
+                        property.property_details?.features?.no_of_bedrooms,
+                      ) || 0
+                    }
+                    baths={
+                      Number(
+                        property.property_details?.features?.no_of_bathrooms,
+                      ) || 0
+                    }
+                    sqm={property.property_details?.features?.land_size || 0}
+                    parking={
+                      property.property_details?.features?.parking ||
+                      property.property_details?.features?.no_of_garage ||
+                      0
+                    }
+                    postedDate={
+                      property.property_details?.rent_details?.available_from ||
+                      new Date()
+                    }
+                    price={
+                      property.property_details?.rent_details
+                        ?.weekly_rent_price || "000,00"
+                    }
+                  />
+                </div>
+              ))}
               {/* </div> */}
               {/* // ))} */}
             </Slider>
           </div>
-        </div>) : (
+        </div>
+      ) : (
         <div className="text-center py-8"></div>
       )}
     </section>

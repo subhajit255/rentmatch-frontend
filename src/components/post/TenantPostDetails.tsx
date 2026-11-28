@@ -5,7 +5,7 @@ import { Card, CardContent } from "../ui/card";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getPostDetails } from "../../../src/actions/myPost";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar, MapPin, Lock, CheckCircle2 } from "lucide-react";
 import Icon from "../icons/icon";
 import { deletePropertyApi, getProperty } from "../../../src/actions/property";
 import PropertyDropDown from "../ui/propertyDropDown";
@@ -83,19 +83,39 @@ const TenantPostDetails = () => {
                     </div> */}
 
                     <div>
-                        <h2 className="text-2xl font-semibold">
-                            {post?.created_by?.first_name || ""} {post?.created_by?.last_name || ""}
-                        </h2>
-
-                        <p className="text-sm text-muted-foreground">
-                            {post?.created_by?.email ? post.created_by.email.replace(/(.{3})(.*)(?=@)/, "$1****") : ""}
-                        </p>
-
-                        {/* <p className="text-sm text-muted-foreground">
-                            {post?.created_by?.phone_extension || ""} {post?.created_by?.phone_extension ? "****" + post?.created_by?.phone_extension.slice(-4) : ""}
-                        </p> */}
-
-                        <p className="text-sm text-muted-foreground">
+                        {post?.invitation_status === "APPROVED" ? (
+                            <>
+                                <h2 className="text-2xl font-semibold flex items-center gap-2">
+                                    {post?.created_by?.first_name || ""} {post?.created_by?.last_name || ""}
+                                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <CheckCircle2 className="w-3.5 h-3.5" /> Connected
+                                    </span>
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
+                                    {post?.created_by?.email || ""}
+                                </p>
+                                {post?.created_by?.phone_number && (
+                                    <p className="text-sm text-muted-foreground">
+                                        {post?.created_by?.phone_extension || ""} {post?.created_by?.phone_number}
+                                    </p>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <h2 className="text-2xl font-semibold">
+                                    {post?.created_by?.user_name?.toUpperCase()?.startsWith("RM-")
+                                        ? `Renter ${post.created_by.user_name.toUpperCase()}`
+                                        : post?.created_by?.member_id?.toUpperCase()?.startsWith("RM-")
+                                        ? `Renter ${post.created_by.member_id.toUpperCase()}`
+                                        : "Renter (Identity Private)"}
+                                </h2>
+                                <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                                    <Lock className="w-3.5 h-3.5 text-slate-400" />
+                                    Identity & contact details stay private until renter accepts your invitation.
+                                </p>
+                            </>
+                        )}
+                        <p className="text-sm text-muted-foreground mt-0.5">
                             {post?.created_by?.gender || ""}
                         </p>
                     </div>
@@ -120,7 +140,11 @@ const TenantPostDetails = () => {
                             }
                             className="px-3 hover:bg-white bg-primary rounded-[99px] hover:text-primary text-white shadow-none border border-primary px-4 py-2 text-xs lg:text-sm 2xl:text-base"
                         >
-                            {post?.is_send_request == true ? "Request Sent" : "Send Request"}
+                            {post?.invitation_status === "APPROVED"
+                                ? "Connected"
+                                : post?.is_send_request == true
+                                ? "Invitation Sent"
+                                : "Send Request"}
                         </Button>
                         {(
                             // openRowId === id &&

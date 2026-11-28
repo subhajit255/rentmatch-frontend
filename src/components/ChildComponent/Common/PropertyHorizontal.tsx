@@ -1,6 +1,6 @@
 import React, { MouseEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapPin } from "lucide-react";
+import { MapPin, Car } from "lucide-react";
 import { Badge } from "./../../ui/badge";
 import { Card, CardContent } from "./../../ui/card";
 import { IMAGES } from "../../../assets/index";
@@ -18,6 +18,7 @@ type PropertyHorizontalProps = {
   property: any;
   isChatscreen?: boolean;
   onLocationClick?: (property: any) => void;
+  hideMatchBadge?: boolean;
   // onCardClick: (id: string) => void;
 };
 
@@ -26,10 +27,13 @@ const PropertyHorizontal: React.FC<PropertyHorizontalProps> = ({
   property,
   isChatscreen = false,
   onLocationClick,
+  hideMatchBadge,
   // onCardClick,
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isOwner = user?.role === "LANDLORD" || user?.role === "PROPERTY MANAGER";
+  const shouldShowMatch = !hideMatchBadge && !isOwner;
   const { openSheet, setParameters: setDrawerParameters } = useSheet();
   const [propertyListings, setpropertyListings] = useState<any[]>([]);
 
@@ -122,23 +126,25 @@ const PropertyHorizontal: React.FC<PropertyHorizontalProps> = ({
               {property?.property_details?.basic?.property_name}
             </h3>
 
-            {/* Match Percentage Badge - Navigates to match breakdown */}
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                const propId = property?._id || id;
-                navigate(`/property-match/${propId}`, { state: { property } });
-              }}
-              className="bg-[#E8F8EE] hover:bg-[#D1F2DE] transition-colors cursor-pointer text-[#065F46] rounded-2xl px-2.5 py-1 flex flex-col items-center justify-center shrink-0 group shadow-2xs"
-              title="Click to view full match score breakdown"
-            >
-              <span className="font-bold text-xs leading-tight group-hover:underline">
-                {property?.matching_percentage ?? property?.matchPercentage ?? property?.matchScore ?? property?.match_percentage ?? property?.match ?? 92}%
-              </span>
-              <span className="font-semibold text-[10px] leading-none">
-                match
-              </span>
-            </div>
+            {/* Match Percentage Badge - Navigates to match breakdown (only for tenants/renters) */}
+            {shouldShowMatch && (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const propId = property?._id || id;
+                  navigate(`/property-match/${propId}`, { state: { property } });
+                }}
+                className="bg-[#E8F8EE] hover:bg-[#D1F2DE] transition-colors cursor-pointer text-[#065F46] rounded-2xl px-2.5 py-1 flex flex-col items-center justify-center shrink-0 group shadow-2xs"
+                title="Click to view full match score breakdown"
+              >
+                <span className="font-bold text-xs leading-tight group-hover:underline">
+                  {property?.matching_percentage ?? property?.matchPercentage ?? property?.matchScore ?? property?.match_percentage ?? property?.match ?? 92}%
+                </span>
+                <span className="font-semibold text-[10px] leading-none">
+                  match
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5 mb-2">
@@ -163,13 +169,12 @@ const PropertyHorizontal: React.FC<PropertyHorizontalProps> = ({
               </div>
             </div>
 
-            {/* Area on next line */}
+            {/* Parking on next line */}
             <div className="flex items-center gap-1">
-              {/* <SquareIcon className="w-4 h-4" /> */}
-              <img src={IMAGES.sqm} alt="" className="w-3 h-3" />
-              <span className="font-sans font-normal text-xs">Area:</span>
+              <Car className="w-3 h-3 text-slate-600" />
+              <span className="font-sans font-normal text-xs">Parking:</span>
               <span className="font-sans font-semibold text-primary-foreground text-xs">
-                {property.property_details?.features?.floor_area || 0} m2
+                {property.property_details?.features?.parking || property.property_details?.features?.no_of_garage || 0}
               </span>
             </div>
           </div>

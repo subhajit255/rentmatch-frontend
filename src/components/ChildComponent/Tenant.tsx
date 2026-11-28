@@ -76,8 +76,16 @@ const Tenant: React.FC<TenantProps> = ({
 
   // 1. Initials from unique renter name / username
   const getInitials = (): string => {
-    const rawUsername = (user.user_name || user.userName || user.member_id || "").trim();
-    if (rawUsername.toUpperCase().includes("RM-") || rawUsername.toUpperCase().startsWith("RM")) {
+    const rawUsername = (
+      user.user_name ||
+      user.userName ||
+      user.member_id ||
+      ""
+    ).trim();
+    if (
+      rawUsername.toUpperCase().includes("RM-") ||
+      rawUsername.toUpperCase().startsWith("RM")
+    ) {
       return "RM";
     }
     const first = user.first_name || user.firstName;
@@ -88,7 +96,11 @@ const Tenant: React.FC<TenantProps> = ({
     if (first && first !== "Renter" && first.trim().length >= 2) {
       return first.trim().slice(0, 2).toUpperCase();
     }
-    if (user.name && user.name !== "Anonymous" && !user.name.toLowerCase().startsWith("renter")) {
+    if (
+      user.name &&
+      user.name !== "Anonymous" &&
+      !user.name.toLowerCase().startsWith("renter")
+    ) {
       const parts = user.name.trim().split(/\s+/);
       if (parts.length >= 2) {
         return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
@@ -98,7 +110,9 @@ const Tenant: React.FC<TenantProps> = ({
       }
     }
     if (rawUsername) {
-      const clean = rawUsername.replace(/^Renter\s*/i, "").replace(/[^a-zA-Z0-9]/g, "");
+      const clean = rawUsername
+        .replace(/^Renter\s*/i, "")
+        .replace(/[^a-zA-Z0-9]/g, "");
       if (clean.length >= 2) return clean.slice(0, 2).toUpperCase();
     }
     if (id && id.length >= 2) {
@@ -109,7 +123,12 @@ const Tenant: React.FC<TenantProps> = ({
 
   // 2. Username instead of real name
   const getDisplayUsername = (): string => {
-    const raw = (user.user_name || user.userName || user.member_id || "").trim();
+    const raw = (
+      user.user_name ||
+      user.userName ||
+      user.member_id ||
+      ""
+    ).trim();
     if (raw) {
       if (raw.toLowerCase().startsWith("renter")) {
         return raw;
@@ -151,8 +170,12 @@ const Tenant: React.FC<TenantProps> = ({
   };
 
   const avatarTheme = AVATAR_THEMES[Math.abs(index) % AVATAR_THEMES.length];
-  const displayMatch = matchPercentage || DUMMY_MATCHES[Math.abs(index) % DUMMY_MATCHES.length];
-  const displayTags = tags && tags.length > 0 ? tags : DEFAULT_TAG_SETS[Math.abs(index) % DEFAULT_TAG_SETS.length];
+  const displayMatch =
+    matchPercentage || DUMMY_MATCHES[Math.abs(index) % DUMMY_MATCHES.length];
+  const displayTags =
+    tags && tags.length > 0
+      ? tags
+      : DEFAULT_TAG_SETS[Math.abs(index) % DEFAULT_TAG_SETS.length];
 
   return (
     <div className="bg-white rounded-[22px] p-6 border border-slate-100 shadow-[0_2px_14px_rgba(16,42,42,0.04)] hover:shadow-lg transition-all duration-300 flex flex-col justify-between h-full">
@@ -165,13 +188,16 @@ const Tenant: React.FC<TenantProps> = ({
             >
               {getInitials()}
             </div>
-            <h3 className="font-bold text-slate-900 text-[15px] truncate" title={getDisplayUsername()}>
+            <h3
+              className="font-bold text-slate-900 text-[15px] truncate"
+              title={getDisplayUsername()}
+            >
               {getDisplayUsername()}
             </h3>
           </div>
-          <div className="bg-[#E8F8EE] text-[#15803D] border border-emerald-100 font-semibold text-xs px-2.5 py-1 rounded-full shrink-0">
+          {/* <div className="bg-[#E8F8EE] text-[#15803D] border border-emerald-100 font-semibold text-xs px-2.5 py-1 rounded-full shrink-0">
             {displayMatch}% match
-          </div>
+          </div> */}
         </div>
 
         {/* Details: Location, Budget, Move-In */}
@@ -179,12 +205,8 @@ const Tenant: React.FC<TenantProps> = ({
           <p className="text-slate-600 font-normal truncate" title={location}>
             {location || "Preferred locations"}
           </p>
-          <p className="text-slate-700 font-medium">
-            {formatPrice()}
-          </p>
-          <p className="text-slate-500 font-normal">
-            {formatMoveIn()}
-          </p>
+          <p className="text-slate-700 font-medium">{formatPrice()}</p>
+          <p className="text-slate-500 font-normal">{formatMoveIn()}</p>
         </div>
 
         {/* Tags Row */}

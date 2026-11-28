@@ -1,5 +1,5 @@
 import React from "react";
-import { MapPin } from "lucide-react";
+import { MapPin, Car } from "lucide-react";
 import { Badge } from "./../ui/badge";
 import { Card, CardContent } from "./../ui/card";
 import { IMAGES } from "../../assets/index";
@@ -92,13 +92,12 @@ const PropertyHorizontal: React.FC<PropertyHorizontalProps> = ({
             </div>
 
             <div className="flex items-center gap-1">
-              {/* <SquareIcon className="w-4 h-4" /> */}
-              <img src={IMAGES.sqm} alt="" className="w-[15px]" />
+              <Car className="w-4 h-4 text-slate-600" />
               <span className="font-sans font-normal text-muted-foreground text-xs md:text-sm tracking-[0] leading-[19.6px]">
-                Area:
+                Parking:
               </span>
               <span className="font-sans font-semibold text-primary-foreground text-xs md:text-sm tracking-[0] leading-[19.6px]">
-                {property.property_details?.features?.floor_area || 0}
+                {property.property_details?.features?.parking || property.property_details?.features?.no_of_garage || 0}
               </span>
             </div>
           </div>

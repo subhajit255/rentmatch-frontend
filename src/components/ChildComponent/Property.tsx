@@ -1,5 +1,5 @@
 import React from "react";
-import { BookmarkIcon, MapPinIcon } from "lucide-react";
+import { BookmarkIcon, MapPinIcon, Car } from "lucide-react";
 // import { Badge } from "./ui/badge";
 import { Badge } from "./../ui/badge";
 import { Button } from "./../ui/button";
@@ -16,7 +16,8 @@ type PropertyProps = {
   title: string;
   beds: number;
   baths: number;
-  sqm: string | number;
+  sqm?: string | number;
+  parking?: string | number;
   postedDate: Date;
   price: string | number;
 };
@@ -31,6 +32,7 @@ const Property: React.FC<PropertyProps> = ({
   beds,
   baths,
   sqm,
+  parking,
   postedDate,
   price,
 }) => {
@@ -112,13 +114,12 @@ const Property: React.FC<PropertyProps> = ({
               </div>
 
               <div className="flex items-center gap-1 shrink-0">
-                {/* <SquareIcon className="w-4 h-4" /> */}
-                <img src={IMAGES.sqm} alt="" className="w-3.5 h-3.5 object-contain" />
+                <Car className="w-3.5 h-3.5 text-slate-600" />
                 <span className="font-sans font-normal text-muted-foreground text-xs tracking-[0]">
-                  Area:
+                  Parking:
                 </span>
                 <span className="font-sans font-semibold text-primary-foreground text-xs tracking-[0]">
-                  {sqm}
+                  {parking ?? sqm ?? 0}
                 </span>
               </div>
             </div>

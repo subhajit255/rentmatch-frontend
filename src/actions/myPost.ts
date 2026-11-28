@@ -1,6 +1,6 @@
 import api from ".";
 import { advanceSearch } from "../types/property";
-import { PM_LL_SAVE_POST_URL, POST_DETAILS_URL, POST_LIST_URL, POST_RECEIVE_REQUEST_URL, POST_REQUEST_SEND_URL, TENANT_POST_ADD_URL, TENANT_POST_DELETE_URL, TENANT_POST_IS_ACTIVE_URL, TENANT_POST_LIST_URL, TENANT_POST_UPDATE_URL } from "./constant";
+import { PM_LL_SAVE_POST_URL, POST_ACCEPT_REJECT_REQUEST_URL, POST_DETAILS_URL, POST_LIST_URL, POST_RECEIVE_REQUEST_URL, POST_REQUEST_SEND_URL, POST_TENANT_INVITATIONS_URL, TENANT_POST_ADD_URL, TENANT_POST_DELETE_URL, TENANT_POST_IS_ACTIVE_URL, TENANT_POST_LIST_URL, TENANT_POST_UPDATE_URL } from "./constant";
 
 export const addMyPostApi = async ( payload : any) => {
   const res = await api.post(TENANT_POST_ADD_URL, payload);
@@ -65,6 +65,20 @@ export const postRequestSendApi = async ( payload : any) => {
 
 export const postReceiveRequestApi = async ( id : string) => {
   const res = await api.get(POST_RECEIVE_REQUEST_URL + "/1/100" +"/"+id);
+  return res.data;
+};
+
+export const getTenantInvitationsApi = async () => {
+  const res = await api.get(POST_TENANT_INVITATIONS_URL);
+  return res.data;
+};
+
+export const acceptRejectPostRequestApi = async (payload: {
+  request_post_id: string;
+  status: "APPROVED" | "REJECTED";
+  discription?: string;
+}) => {
+  const res = await api.patch(POST_ACCEPT_REJECT_REQUEST_URL, payload);
   return res.data;
 };
 

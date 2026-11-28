@@ -11,7 +11,7 @@ import { useAuth } from "../../context/AuthContext";
 import { advanceSearch } from "@/src/types/property";
 import { IMAGES } from "../../assets/index";
 import { Input } from "../ui/input";
-import { Lock, Play } from "lucide-react";
+import { Lock, Play, RotateCcw } from "lucide-react";
 
 const DEMO_TENANT_POSTS = [
     {
@@ -81,23 +81,26 @@ const ACCESSIBILITY_OPTIONS = [
     { id: "accessible_bath", title: "Accessible bathroom", value: "accessible_bath" },
 ];
 
+const DEFAULT_PARAMS: advanceSearch & { accessibility?: string } = {
+    start_price: "0",
+    end_price: "2000",
+    garages: "",
+    bathrooms: "",
+    bedrooms: "",
+    balcony: "",
+    rentalCityPreference: "",
+    rentalStatePreference: "",
+    accessibility: "",
+};
+
 const FindTenants = () => {
     const { user } = useAuth();
-    const [params, setParams] = useState<advanceSearch & { accessibility?: string }>({
-        start_price: "0",
-        end_price: "2000",
-        garages: "",
-        bathrooms: "",
-        bedrooms: "",
-        balcony: "",
-        rentalCityPreference: "",
-        rentalStatePreference: "",
-        accessibility: "",
-    });
+    const [params, setParams] = useState<advanceSearch & { accessibility?: string }>({ ...DEFAULT_PARAMS });
 
     const [appliedParams, setAppliedParams] = useState<advanceSearch | null>(null);
     const [page, setPage] = useState<number>(1);
     const [limit, setLimit] = useState<number>(100);
+    const [resetKey, setResetKey] = useState<number>(0);
 
     const { data, isLoading, isError, refetch } = useQuery({
         queryKey: ['all_post', page, limit, appliedParams],
@@ -135,7 +138,13 @@ const FindTenants = () => {
         );
         setAppliedParams(filteredParams);
         setPage(1);
-        refetch();
+    };
+
+    const handleReset = () => {
+        setParams({ ...DEFAULT_PARAMS });
+        setAppliedParams(null);
+        setPage(1);
+        setResetKey((prev) => prev + 1);
     };
 
     const emptyState = (
@@ -212,8 +221,9 @@ const FindTenants = () => {
                         <div className="flex flex-col gap-1.5">
                             <Label className="text-xs font-semibold text-slate-700">Garages</Label>
                             <Select
+                                key={`${resetKey}-garages`}
                                 onValueChange={(val) => handleSelectChange("garages", val)}
-                                value={params?.garages}
+                                value={params?.garages || undefined}
                             >
                                 <SelectTrigger className="w-full h-11 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs shadow-none hover:border-slate-300 transition-colors">
                                     <SelectValue placeholder="Select your garages" />
@@ -232,8 +242,9 @@ const FindTenants = () => {
                         <div className="flex flex-col gap-1.5">
                             <Label className="text-xs font-semibold text-slate-700">Bathrooms</Label>
                             <Select
+                                key={`${resetKey}-bathrooms`}
                                 onValueChange={(val) => handleSelectChange("bathrooms", val)}
-                                value={params?.bathrooms}
+                                value={params?.bathrooms || undefined}
                             >
                                 <SelectTrigger className="w-full h-11 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs shadow-none hover:border-slate-300 transition-colors">
                                     <SelectValue placeholder="Select your bathrooms" />
@@ -252,8 +263,9 @@ const FindTenants = () => {
                         <div className="flex flex-col gap-1.5">
                             <Label className="text-xs font-semibold text-slate-700">Bedrooms</Label>
                             <Select
+                                key={`${resetKey}-bedrooms`}
                                 onValueChange={(val) => handleSelectChange("bedrooms", val)}
-                                value={params?.bedrooms}
+                                value={params?.bedrooms || undefined}
                             >
                                 <SelectTrigger className="w-full h-11 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs shadow-none hover:border-slate-300 transition-colors">
                                     <SelectValue placeholder="Select your bedrooms" />
@@ -272,8 +284,9 @@ const FindTenants = () => {
                         <div className="flex flex-col gap-1.5">
                             <Label className="text-xs font-semibold text-slate-700">Accessibility needs it can meet</Label>
                             <Select
+                                key={`${resetKey}-accessibility`}
                                 onValueChange={(val) => handleSelectChange("accessibility", val)}
-                                value={params?.accessibility}
+                                value={params?.accessibility || undefined}
                             >
                                 <SelectTrigger className="w-full h-11 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs shadow-none hover:border-slate-300 transition-colors">
                                     <SelectValue placeholder="Select accessibility features" />
@@ -298,14 +311,30 @@ const FindTenants = () => {
                                 className="w-full h-11 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs shadow-none placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-[#1E3A8A]"
                                 value={params?.rentalCityPreference || ""}
                                 onChange={(e) => handleSelectChange("rentalCityPreference", e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        handleSearch();
+                                    }
+                                }}
                             />
                         </div>
 
-                        {/* Find Tenant action button */}
-                        <div className="w-full flex justify-center pt-2">
+                        {/* Find Tenant & Reset action buttons */}
+                        <div className="w-full flex items-center gap-3 pt-2">
                             <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleReset}
+                                className="rounded-full border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold px-5 py-2.5 h-11 text-sm transition-all cursor-pointer inline-flex items-center gap-1.5"
+                            >
+                                <RotateCcw className="w-4 h-4" />
+                                Reset
+                            </Button>
+                            <Button
+                                type="button"
                                 onClick={handleSearch}
-                                className="rounded-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 text-white font-semibold px-12 py-2.5 h-11 text-sm shadow-sm transition-all cursor-pointer"
+                                className="flex-1 rounded-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 text-white font-semibold px-8 py-2.5 h-11 text-sm shadow-sm transition-all cursor-pointer"
                             >
                                 Find Tenant
                             </Button>

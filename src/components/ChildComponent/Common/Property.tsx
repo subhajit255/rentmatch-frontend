@@ -1,6 +1,6 @@
 import React, { MouseEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookmarkIcon, MapPinIcon } from "lucide-react";
+import { BookmarkIcon, MapPinIcon, Car } from "lucide-react";
 import { Badge } from "./../../ui/badge";
 import { Button } from "./../../ui/button";
 import { Card, CardContent } from "./../../ui/card";
@@ -18,6 +18,7 @@ type PropertyProps = {
   id: string | number;
   property: any;
   onLocationClick?: (property: any) => void;
+  hideMatchBadge?: boolean;
   // onCardClick: (id: string) => void;
 };
 
@@ -25,9 +26,12 @@ const Property: React.FC<PropertyProps> = ({
   id,
   property,
   onLocationClick,
+  hideMatchBadge,
   // onCardClick,
 }) => {
   const { user } = useAuth();
+  const isOwner = user?.role === "LANDLORD" || user?.role === "PROPERTY MANAGER";
+  const shouldShowMatch = !hideMatchBadge && !isOwner;
   const navigate = useNavigate();
   // console.log(id,"<---id hai ??")
   const { openSheet, setParameters: setDrawerParameters } = useSheet();
@@ -197,11 +201,10 @@ const Property: React.FC<PropertyProps> = ({
               </div>
 
               <div className="flex items-center gap-1 shrink-0">
-                {/* <SquareIcon className="w-4 h-4" /> */}
-                <img src={IMAGES.sqm} alt="" className="w-3 h-3" />
-                <span className="font-sans font-normal text-xs">Area:</span>
+                <Car className="w-3 h-3 text-slate-600" />
+                <span className="font-sans font-normal text-xs">Parking:</span>
                 <span className="font-sans font-semibold text-primary-foreground text-xs">
-                  {property.property_details?.features?.floor_area || 0}
+                  {property.property_details?.features?.parking || property.property_details?.features?.no_of_garage || 0}
                 </span>
               </div>
             </div>
@@ -229,36 +232,38 @@ const Property: React.FC<PropertyProps> = ({
             </div>
           </div>
 
-          {/* Match Percentage Badge - Navigates to match breakdown */}
-          <div
-            onClick={(e) => {
-              e.stopPropagation();
-              const propId = property?._id || id;
-              navigate(`/property-match/${propId}`, { state: { property } });
-            }}
-            className="mt-2 w-full bg-[#E8F8EE] hover:bg-[#D1F2DE] transition-colors cursor-pointer text-[#065F46] rounded-xl py-1.5 px-3 flex items-center justify-center group shadow-2xs"
-            title="Click to view full match score breakdown"
-          >
-            <span className="font-bold text-xs tracking-wide group-hover:underline">
-              {property?.matching_percentage ??
-                property?.matchPercentage ??
-                property?.matchScore ??
-                property?.match_percentage ??
-                property?.match ??
-                (id
-                  ? 88 +
-                    (Math.abs(
-                      typeof id === "string"
-                        ? id
-                            .split("")
-                            .reduce((acc, c) => acc + c.charCodeAt(0), 0)
-                        : Number(id),
-                    ) %
-                      10)
-                  : 92)}
-              % match
-            </span>
-          </div>
+          {/* Match Percentage Badge - Navigates to match breakdown (only for tenants/renters) */}
+          {shouldShowMatch && (
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                const propId = property?._id || id;
+                navigate(`/property-match/${propId}`, { state: { property } });
+              }}
+              className="mt-2 w-full bg-[#E8F8EE] hover:bg-[#D1F2DE] transition-colors cursor-pointer text-[#065F46] rounded-xl py-1.5 px-3 flex items-center justify-center group shadow-2xs"
+              title="Click to view full match score breakdown"
+            >
+              <span className="font-bold text-xs tracking-wide group-hover:underline">
+                {property?.matching_percentage ??
+                  property?.matchPercentage ??
+                  property?.matchScore ??
+                  property?.match_percentage ??
+                  property?.match ??
+                  (id
+                    ? 88 +
+                      (Math.abs(
+                        typeof id === "string"
+                          ? id
+                              .split("")
+                              .reduce((acc, c) => acc + c.charCodeAt(0), 0)
+                          : Number(id),
+                      ) %
+                        10)
+                    : 92)}
+                % match
+              </span>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -39,6 +39,7 @@ import { useGoogleMaps } from "../../context/GoogleMapsProvider";
 import { useSearchParams } from "react-router-dom";
 import { getPropertyTypeList } from "../../actions/propertyMaster";
 import { RotateCcw } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 // 2. Define libraries outside the component to prevent re-renders
 const LIBRARIES: "places"[] = ["places"];
@@ -88,6 +89,8 @@ const defaultFilter: PropertyFilter = {
 };
 
 const ExploreProperties = () => {
+  const { user } = useAuth();
+  const isLandlord = user?.role === "LANDLORD" || user?.role === "PROPERTY MANAGER";
   // const defaultCenter = { lat: 22.5726, lng: 88.3639 }; // kolkata lat lng by default
   const defaultCenter = { lat: -35.2809, lng: 149.13 };
   const { isLoaded, loadError } = useGoogleMaps();
@@ -434,6 +437,7 @@ const ExploreProperties = () => {
                                 id={property?._id}
                                 property={property}
                                 onLocationClick={handleLocationClick}
+                                hideMatchBadge={isLandlord}
                                 // onCardClick={() => handleCardClick(property?._id)}
                               />
                             </div>
@@ -487,6 +491,7 @@ const ExploreProperties = () => {
                                   id={property?._id}
                                   property={property}
                                   onLocationClick={handleLocationClick}
+                                  hideMatchBadge={isLandlord}
                                   // onCardClick={() => handleCardClick(property._id)}
                                 />
                               </div>

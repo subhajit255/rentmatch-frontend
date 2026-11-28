@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { MapPin } from "lucide-react";
+import { MapPin, Car } from "lucide-react";
 import { Button } from "../../ui/button";
 import { Card } from "../../ui/card";
 import { IMAGES } from "../../../assets/index";
@@ -163,10 +163,10 @@ const MyProperty: React.FC<PostProps> = ({
               </li>
               <li>
                 <div className="flex items-center gap-1">
-                  <img src={IMAGES.sqm} alt="" className="w-3.5 h-3.5 opacity-80" />
-                  <span className="text-xs text-slate-500 font-normal">Area:</span>
+                  <Car className="w-3.5 h-3.5 text-slate-600 opacity-80" />
+                  <span className="text-xs text-slate-500 font-normal">Parking:</span>
                   <span className="text-xs font-bold text-slate-800">
-                    {features?.floor_area || 0}
+                    {features?.parking || features?.no_of_garage || 0}
                   </span>
                 </div>
               </li>
